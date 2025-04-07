@@ -8,29 +8,28 @@ interface GlassMorphCardProps {
   className?: string;
   onClick?: () => void;
   hover?: boolean;
-  dark?: boolean;
 }
 
 const GlassMorphCard: React.FC<GlassMorphCardProps> = ({ 
   children, 
   className, 
   onClick, 
-  hover = true,
-  dark = false
+  hover = true 
 }) => {
   return (
     <motion.div
-      whileHover={hover ? { y: -5, transition: { duration: 0.2 } } : undefined}
       className={cn(
-        dark ? 'glass-dark' : 'glass',
-        'rounded-xl p-6',
-        hover ? 'cursor-pointer transition-all duration-300 hover:shadow-xl' : '',
+        "bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-xl p-6 border border-gray-100",
+        hover ? "shadow-sm" : "",
+        onClick ? "cursor-pointer" : "",
         className
       )}
-      onClick={onClick}
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.4 }}
+      whileHover={hover && onClick ? { scale: 1.02, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" } : {}}
+      whileTap={onClick ? { scale: 0.98 } : {}}
+      onClick={onClick}
     >
       {children}
     </motion.div>
