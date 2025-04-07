@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +7,7 @@ import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
 
-const steps = ["Onboarding", "Data Source", "Model Selection", "Forecast Setup", "Dashboard"];
+const steps = ["Onboarding", "Data Source", "Model Selection", "Generated Forecast", "Dashboard"];
 
 const models = [
   {
