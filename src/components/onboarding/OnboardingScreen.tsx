@@ -2,44 +2,44 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChartBar, Database, Brain } from 'lucide-react';
+import { LineChart, Briefcase, PlusCircle } from 'lucide-react';
 import AnimatedCard from '../ui/AnimatedCard';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
 
 const tasks = [
   {
-    id: 'data-insights',
-    title: 'Data Insights',
-    description: 'Explore your sales and inventory data.',
-    icon: <Database className="w-6 h-6" />,
-    color: 'bg-blue-50 text-blue-500',
-  },
-  {
     id: 'demand-forecasting',
     title: 'Demand Forecasting',
     description: 'Generate forecast for your upcoming periods.',
-    icon: <ChartBar className="w-6 h-6" />,
-    color: 'bg-purple-50 text-purple-500',
+    icon: <LineChart className="w-6 h-6" />,
+    color: 'bg-green-50 text-green-500',
   },
   {
-    id: 'decision-making',
-    title: 'Decision Making',
-    description: 'Optimize reorder quantities based on forecast.',
-    icon: <Brain className="w-6 h-6" />,
-    color: 'bg-green-50 text-green-500',
+    id: 'scenario-planning',
+    title: 'Scenario Planning',
+    description: 'Test for "What-if" scenarios.',
+    icon: <Briefcase className="w-6 h-6" />,
+    color: 'bg-blue-50 text-blue-500',
+  },
+  {
+    id: 'new-product',
+    title: 'New Product Introduction',
+    description: 'Estimate the quantity of product without historical data.',
+    icon: <PlusCircle className="w-6 h-6" />,
+    color: 'bg-purple-50 text-purple-500',
   },
 ];
 
 const businessTypes = ['Apparel', 'Beauty', 'Electronics', 'Food & Beverage', 'Home Goods', 'Other'];
-const productLifecycles = ['Seasonal', 'Evergreen', 'Short Lifecycle'];
-const forecastingGoals = ['Replenishment', 'New Product Launch', 'Promotions', 'Inventory Optimization'];
+const forecastingHorizons = [30, 60, 90, 180];
+const forecastingGoals = ['Promotions', 'Seasonality'];
 
 const OnboardingScreen: React.FC = () => {
   const navigate = useNavigate();
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [businessType, setBusinessType] = useState('');
-  const [productLifecycle, setProductLifecycle] = useState('');
+  const [forecastingHorizon, setForecastingHorizon] = useState('');
   const [shopifyPercent, setShopifyPercent] = useState('');
   const [wholesalePercent, setWholesalePercent] = useState('');
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
@@ -64,7 +64,7 @@ const OnboardingScreen: React.FC = () => {
     return (
       selectedTask && 
       businessType && 
-      productLifecycle && 
+      forecastingHorizon && 
       selectedGoals.length > 0
     );
   };
@@ -77,7 +77,7 @@ const OnboardingScreen: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-bold tracking-tight mb-2">Welcome to Your Demand Forecasting Add-On</h1>
+        <h1 className="text-4xl font-bold tracking-tight mb-2">Welcome to FeatureBox AI</h1>
         <p className="text-lg text-gray-600">Get started by selecting your primary activity and telling us about your business.</p>
       </motion.div>
 
@@ -127,20 +127,20 @@ const OnboardingScreen: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Product Lifecycle</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Forecasting Horizon</label>
             <div className="flex flex-wrap gap-2">
-              {productLifecycles.map(cycle => (
+              {forecastingHorizons.map(horizon => (
                 <button
-                  key={cycle}
+                  key={horizon}
                   type="button"
-                  onClick={() => setProductLifecycle(cycle)}
+                  onClick={() => setForecastingHorizon(horizon.toString())}
                   className={`px-4 py-2 rounded-md text-sm ${
-                    productLifecycle === cycle 
+                    forecastingHorizon === horizon.toString() 
                       ? 'bg-primary text-white' 
                       : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                   }`}
                 >
-                  {cycle}
+                  {horizon} days
                 </button>
               ))}
             </div>

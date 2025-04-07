@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, LineChart, ShoppingCart, ArrowRight } from 'lucide-react';
+import { LineChart, ShoppingCart, Briefcase, PlusCircle, ArrowRight } from 'lucide-react';
 import GlassMorphCard from '@/components/ui/GlassMorphCard';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
 import { Button } from '@/components/ui/button';
@@ -11,11 +11,9 @@ import { Card, CardContent } from '@/components/ui/card';
 const Index = () => {
   const navigate = useNavigate();
   const [businessType, setBusinessType] = useState('');
-  const [productLifecycle, setProductLifecycle] = useState('');
   const [salesChannels, setSalesChannels] = useState({ online: '', offline: '' });
+  const [forecastingHorizon, setForecastingHorizon] = useState('');
   const [forecastingGoals, setForecastingGoals] = useState({
-    replenishment: false,
-    newProduct: false,
     promotions: false,
     seasonality: false
   });
@@ -37,7 +35,7 @@ const Index = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Google Sheets Demand Forecasting Add-On</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">FeatureBox AI</h1>
           <p className="text-lg text-gray-600">Welcome to your intelligent demand forecasting assistant</p>
         </motion.div>
 
@@ -47,23 +45,6 @@ const Index = () => {
           animate="animate"
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
         >
-          <motion.div variants={staggerItem}>
-            <GlassMorphCard 
-              className="h-full"
-              onClick={() => handleCardClick('/data-insights')}
-            >
-              <div className="flex flex-col items-center text-center h-full">
-                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
-                  <BarChart3 size={28} />
-                </div>
-                <h3 className="text-xl font-medium mb-3">Data Insights</h3>
-                <p className="text-gray-600">
-                  Explore your sales and inventory data to identify trends and patterns.
-                </p>
-              </div>
-            </GlassMorphCard>
-          </motion.div>
-
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
               className="h-full"
@@ -84,15 +65,32 @@ const Index = () => {
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
               className="h-full"
+              onClick={() => handleCardClick('/data-insights')}
+            >
+              <div className="flex flex-col items-center text-center h-full">
+                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
+                  <Briefcase size={28} />
+                </div>
+                <h3 className="text-xl font-medium mb-3">Scenario Planning</h3>
+                <p className="text-gray-600">
+                  Test for "What-if" scenarios.
+                </p>
+              </div>
+            </GlassMorphCard>
+          </motion.div>
+
+          <motion.div variants={staggerItem}>
+            <GlassMorphCard 
+              className="h-full"
               onClick={() => handleCardClick('/constraints')}
             >
               <div className="flex flex-col items-center text-center h-full">
                 <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4">
-                  <ShoppingCart size={28} />
+                  <PlusCircle size={28} />
                 </div>
-                <h3 className="text-xl font-medium mb-3">Decision Making</h3>
+                <h3 className="text-xl font-medium mb-3">New Product Introduction</h3>
                 <p className="text-gray-600">
-                  Optimize reorder quantities based on forecasts and business constraints.
+                  Estimate the quantity of product without historical data.
                 </p>
               </div>
             </GlassMorphCard>
@@ -122,13 +120,13 @@ const Index = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Product Lifecycle</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['Seasonal', 'Evergreen', 'Short'].map((type) => (
+                <label className="block text-sm font-medium text-gray-700 mb-2">Forecasting Horizon</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[30, 60, 90, 180].map((days) => (
                     <label 
-                      key={type}
+                      key={days}
                       className={`flex items-center justify-center p-2 border rounded-md cursor-pointer transition-colors ${
-                        productLifecycle === type.toLowerCase() 
+                        forecastingHorizon === days.toString() 
                           ? 'bg-blue-50 border-blue-500 text-blue-700' 
                           : 'border-gray-300 hover:bg-gray-50'
                       }`}
@@ -136,12 +134,12 @@ const Index = () => {
                       <input
                         type="radio"
                         className="sr-only"
-                        name="productLifecycle"
-                        value={type.toLowerCase()}
-                        checked={productLifecycle === type.toLowerCase()}
-                        onChange={(e) => setProductLifecycle(e.target.value)}
+                        name="forecastingHorizon"
+                        value={days}
+                        checked={forecastingHorizon === days.toString()}
+                        onChange={(e) => setForecastingHorizon(e.target.value)}
                       />
-                      <span>{type}</span>
+                      <span>{days} days</span>
                     </label>
                   ))}
                 </div>
@@ -180,10 +178,8 @@ const Index = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Forecasting Goals</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: 'replenishment', label: 'Replenishment' },
-                  { id: 'newProduct', label: 'New Product Launch' },
                   { id: 'promotions', label: 'Promotions' },
                   { id: 'seasonality', label: 'Seasonality' }
                 ].map((goal) => (

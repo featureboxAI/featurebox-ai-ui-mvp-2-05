@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +6,7 @@ import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
 
-const steps = ["Onboarding", "Data Source", "Model Selection", "Forecast Setup", "Constraints", "Dashboard"];
+const steps = ["Onboarding", "Data Source", "Model Selection", "Forecast Setup", "Dashboard"];
 
 const models = [
   {
@@ -52,7 +51,6 @@ const ModelSelectionScreen: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   
   useEffect(() => {
-    // Simulate data analysis to determine best model
     const timer = setTimeout(() => {
       setIsAnalyzing(false);
       setSelectedModel('prophet');
@@ -232,7 +230,7 @@ const ModelSelectionScreen: React.FC = () => {
           disabled={isAnalyzing}
           onClick={handleContinue}
         >
-          Continue to Forecast Setup
+          Generate Forecast
         </motion.button>
       </div>
     </div>

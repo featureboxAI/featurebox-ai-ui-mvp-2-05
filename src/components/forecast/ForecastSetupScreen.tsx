@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -40,7 +39,7 @@ const ForecastSetupScreen: React.FC = () => {
   };
   
   const handleContinue = () => {
-    navigate('/constraints');
+    navigate('/dashboard');
   };
 
   return (
@@ -235,7 +234,7 @@ const ForecastSetupScreen: React.FC = () => {
           disabled={!forecastGenerated}
           onClick={handleContinue}
         >
-          Continue to Business Constraints
+          Continue to Dashboard
         </motion.button>
       </div>
     </motion.div>
