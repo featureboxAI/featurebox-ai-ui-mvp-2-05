@@ -2,25 +2,37 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Download, AlertTriangle, Sparkles } from 'lucide-react';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { pageTransition } from '@/utils/transitions';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { getAIInsights } from '@/utils/googleSheetsHelpers';
 
 const steps = ["Onboarding", "Data Source", "Model Selection", "Generated Forecast", "Dashboard"];
 
-// Sample forecast data with more products
+// Sample forecast data with products matching dashboard
 const forecastData = [
+  { sku: 'SHIRT-001', name: 'Classic T-Shirt', forecast: 450, confidence: '±25', stockout: 'None', suggested: 460 },
+  { sku: 'BAG-022', name: 'Canvas Tote Bag', forecast: 320, confidence: '±30', stockout: 'July 22', suggested: 340 },
+  { sku: 'SHOE-153', name: 'Running Sneakers', forecast: 180, confidence: '±20', stockout: 'None', suggested: 160 },
+  { sku: 'HAT-064', name: 'Baseball Cap', forecast: 210, confidence: '±15', stockout: 'None', suggested: 215 },
+  { sku: 'JACKET-045', name: 'Denim Jacket', forecast: 125, confidence: '±15', stockout: 'August 10', suggested: 130 },
   { sku: 'ALX-001', name: 'Men\'s Basic Tee', forecast: 215, confidence: '±35', stockout: 'None', suggested: 250 },
   { sku: 'ALX-002', name: 'Women\'s V-Neck Tee', forecast: 340, confidence: '±42', stockout: 'July 15', suggested: 400 },
   { sku: 'ALX-003', name: 'Slim Fit Jeans', forecast: 120, confidence: '±18', stockout: 'None', suggested: 130 },
   { sku: 'ALX-004', name: 'Hooded Sweatshirt', forecast: 85, confidence: '±12', stockout: 'None', suggested: 100 },
   { sku: 'ALX-005', name: 'Casual Shorts', forecast: 175, confidence: '±28', stockout: 'July 22', suggested: 210 },
-  { sku: 'ALX-006', name: 'Athletic Socks', forecast: 420, confidence: '±45', stockout: 'None', suggested: 450 },
-  { sku: 'ALX-007', name: 'Premium Polo Shirt', forecast: 155, confidence: '±25', stockout: 'August 5', suggested: 190 },
-  { sku: 'ALX-008', name: 'Leather Belt', forecast: 90, confidence: '±15', stockout: 'None', suggested: 100 },
-  { sku: 'ALX-009', name: 'Wool Beanie', forecast: 110, confidence: '±20', stockout: 'None', suggested: 120 },
-  { sku: 'ALX-010', name: 'Women\'s Blouse', forecast: 280, confidence: '±35', stockout: 'July 30', suggested: 320 },
+];
+
+// AI insights that match the products and forecasts
+const aiInsights = [
+  "Sales for Classic T-Shirt show a strong upward trend (+15% MoM), consider increasing inventory by 20%.",
+  "Canvas Tote Bag has a high stockout risk (80%) in the next 30 days based on current inventory levels.",
+  "Running Sneakers product may be overstocked. Consider promotional discounts to reduce inventory.",
+  "Baseball Cap sales have seasonal peaks in summer. Plan inventory accordingly.",
+  "Based on lead time analysis, order Denim Jackets at least 45 days before anticipated demand peaks."
 ];
 
 const ForecastSetupScreen: React.FC = () => {
@@ -105,6 +117,42 @@ const ForecastSetupScreen: React.FC = () => {
             </button>
           </div>
         </div>
+        
+        {/* New AI Insights Section */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg">AI Insights & Explanation</h3>
+            </div>
+            
+            <p className="mb-4 text-sm text-gray-600">
+              Our AI has analyzed your historical data and generated the following insights about your forecasted demand:
+            </p>
+            
+            <div className="space-y-4">
+              {aiInsights.map((insight, index) => (
+                <div key={index} className="flex gap-3 items-start bg-slate-50 p-3 rounded-md">
+                  <div className="bg-primary/10 text-primary font-medium rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">
+                    {index + 1}
+                  </div>
+                  <p className="text-sm">{insight}</p>
+                </div>
+              ))}
+            </div>
+            
+            <Separator className="my-6" />
+            
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+              <h4 className="font-medium mb-2 text-blue-700">Forecast Methodology</h4>
+              <p className="text-sm text-blue-900">
+                This forecast was generated using an ensemble of machine learning models including XGBoost and ARIMA, 
+                with a combined accuracy of 87.3% on backtesting. The models account for seasonality, trends, and 
+                external factors such as promotions and market conditions.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
       
       <div className="flex justify-between">

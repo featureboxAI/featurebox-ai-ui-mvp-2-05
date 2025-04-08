@@ -21,26 +21,24 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ steps, currentSte
       
       <div className="flex justify-between">
         {steps.map((step, index) => (
-          <React.Fragment key={index}>
-            <div className="flex flex-col items-center">
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm mb-1",
-                index < currentStep 
-                  ? "bg-primary text-white"
-                  : index === currentStep
-                    ? "border-2 border-primary text-primary"
-                    : "bg-gray-100 text-gray-400"
-              )}>
-                {index < currentStep ? "✓" : index + 1}
-              </div>
-              <span className={cn(
-                "text-xs hidden sm:block",
-                index === currentStep ? "text-primary font-medium" : "text-gray-500"
-              )}>
-                {step}
-              </span>
+          <div key={index} className="flex flex-col items-center">
+            <div className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center text-sm mb-1",
+              index < currentStep 
+                ? "bg-primary text-white"
+                : index === currentStep
+                  ? "border-2 border-primary text-primary"
+                  : "bg-gray-100 text-gray-400"
+            )}>
+              {index < currentStep ? "✓" : index + 1}
             </div>
-          </React.Fragment>
+            <span className={cn(
+              "text-xs hidden sm:block",
+              index === currentStep ? "text-primary font-medium" : "text-gray-500"
+            )}>
+              {step}
+            </span>
+          </div>
         ))}
       </div>
     </div>

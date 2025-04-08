@@ -43,8 +43,8 @@ const DashboardScreen: React.FC = () => {
     console.log('Exporting forecast data...');
   };
 
-  const handleNavigateToConstraints = () => {
-    navigate('/constraints');
+  const handleNavigateToForecast = () => {
+    navigate('/forecast-setup');
   };
 
   // Sample forecast data - in a real app this would come from an API or context
@@ -72,9 +72,9 @@ const DashboardScreen: React.FC = () => {
           <p className="text-muted-foreground">View and analyze your demand forecast predictions</p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={handleNavigateToConstraints}>
+          <Button variant="outline" onClick={handleNavigateToForecast}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Adjust Constraints
+            Generated Forecast
           </Button>
           <Button onClick={handleExportData}>
             <Download className="mr-2 h-4 w-4" />

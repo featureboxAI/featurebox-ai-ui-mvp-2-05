@@ -3,7 +3,7 @@ import React from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 const ForecastTable: React.FC = () => {
-  // Sample forecast data - would come from API in real app
+  // Updated forecast data to match with ForecastSetupScreen
   const forecastData = [
     { 
       sku: 'SHIRT-001', 
