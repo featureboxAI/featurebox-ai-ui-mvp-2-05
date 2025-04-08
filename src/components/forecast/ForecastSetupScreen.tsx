@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -118,7 +117,6 @@ const ForecastSetupScreen: React.FC = () => {
           </div>
         </div>
         
-        {/* New AI Insights Section */}
         <Card className="mb-8">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
@@ -139,17 +137,6 @@ const ForecastSetupScreen: React.FC = () => {
                   <p className="text-sm">{insight}</p>
                 </div>
               ))}
-            </div>
-            
-            <Separator className="my-6" />
-            
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-              <h4 className="font-medium mb-2 text-blue-700">Forecast Methodology</h4>
-              <p className="text-sm text-blue-900">
-                This forecast was generated using an ensemble of machine learning models including XGBoost and ARIMA, 
-                with a combined accuracy of 87.3% on backtesting. The models account for seasonality, trends, and 
-                external factors such as promotions and market conditions.
-              </p>
             </div>
           </CardContent>
         </Card>
