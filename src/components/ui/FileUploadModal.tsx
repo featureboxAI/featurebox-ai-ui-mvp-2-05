@@ -12,8 +12,10 @@ interface FileUploadModalProps {
   onUploadSuccess: () => void;
 }
 
+const API_URL = 'https://featurebox-backend.onrender.com/forecast';
+
 const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUploadSuccess }) => {
-  const { forecastType, setUploadedFile, setIsUploadSuccessful } = useForecast();
+  const { forecastType, setUploadedFile, setIsUploadSuccessful, setForecastResult } = useForecast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,18 +39,30 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUp
     setIsUploading(true);
     
     try {
-      // Simulating API upload
+      // Create form data for API call
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('forecast_type', forecastType.toLowerCase());
+      
       console.log('Uploading file:', selectedFile.name);
+      console.log('API URL:', API_URL);
       console.log('With forecast type:', forecastType.toLowerCase());
       
-      // Normally we would send this to an API
-      // const formData = new FormData();
-      // formData.append('file', selectedFile);
-      // formData.append('forecastType', forecastType);
-      // const response = await fetch('/api/upload', { method: 'POST', body: formData });
+      // Make the actual API call
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: formData,
+      });
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('API Response:', result);
+      
+      // Save the forecast result in context
+      setForecastResult(result);
       
       // Update context
       setUploadedFile(selectedFile);
@@ -68,7 +82,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        resetFileInput();
+        onClose();
+      }
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Upload CSV File</DialogTitle>

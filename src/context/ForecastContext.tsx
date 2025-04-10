@@ -1,6 +1,22 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
+interface ForecastResult {
+  model_selected: string;
+  sarima?: {
+    forecast: number[];
+    lower_bound: number[];
+    upper_bound: number[];
+    dates: string[];
+    method: string;
+  };
+  moving_average?: {
+    forecast: number[];
+    dates: string[];
+    method: string;
+  };
+}
+
 interface ForecastContextType {
   forecastType: string;
   setForecastType: (type: string) => void;
@@ -8,6 +24,8 @@ interface ForecastContextType {
   setUploadedFile: (file: File | null) => void;
   isUploadSuccessful: boolean;
   setIsUploadSuccessful: (success: boolean) => void;
+  forecastResult: ForecastResult | null;
+  setForecastResult: (result: ForecastResult | null) => void;
 }
 
 const ForecastContext = createContext<ForecastContextType | undefined>(undefined);
@@ -16,6 +34,7 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
   const [forecastType, setForecastType] = useState<string>('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploadSuccessful, setIsUploadSuccessful] = useState<boolean>(false);
+  const [forecastResult, setForecastResult] = useState<ForecastResult | null>(null);
 
   return (
     <ForecastContext.Provider value={{ 
@@ -24,7 +43,9 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
       uploadedFile,
       setUploadedFile,
       isUploadSuccessful,
-      setIsUploadSuccessful
+      setIsUploadSuccessful,
+      forecastResult,
+      setForecastResult
     }}>
       {children}
     </ForecastContext.Provider>

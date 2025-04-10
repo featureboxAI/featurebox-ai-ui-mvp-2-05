@@ -12,15 +12,7 @@ const steps = ["Onboarding", "Data Source", "Model Selection", "Generated Foreca
 
 const models = [
   {
-    id: 'prophet',
-    name: 'Prophet',
-    description: 'Best for seasonal patterns and trends with multiple seasonality.',
-    strengths: ['Handles holidays', 'Multiple seasonality', 'Trend changepoints'],
-    dataNeeded: 'At least 1 year of historical data preferred',
-    complexity: 'Medium',
-  },
-  {
-    id: 'sarima',
+    id: 'SARIMA',
     name: 'SARIMA',
     description: 'Powerful for stable time series with clear seasonal patterns.',
     strengths: ['Strong with stable patterns', 'Good with regular seasonality', 'Statistical rigor'],
@@ -28,7 +20,15 @@ const models = [
     complexity: 'High',
   },
   {
-    id: 'lightgbm',
+    id: 'Prophet',
+    name: 'Prophet',
+    description: 'Best for seasonal patterns and trends with multiple seasonality.',
+    strengths: ['Handles holidays', 'Multiple seasonality', 'Trend changepoints'],
+    dataNeeded: 'At least 1 year of historical data preferred',
+    complexity: 'Medium',
+  },
+  {
+    id: 'LightGBM',
     name: 'LightGBM',
     description: 'Machine learning approach for complex patterns and many features.',
     strengths: ['Handles many variables', 'Can incorporate external factors', 'Non-linear patterns'],
@@ -36,7 +36,7 @@ const models = [
     complexity: 'Medium-High',
   },
   {
-    id: 'ensemble',
+    id: 'Ensemble',
     name: 'Ensemble',
     description: 'Combines multiple models for more robust forecasts.',
     strengths: ['Reduces individual model errors', 'More stable predictions', 'Best overall performance'],
@@ -47,8 +47,8 @@ const models = [
 
 const ModelSelectionScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { forecastType } = useForecast();
-  const [recommendedModel, setRecommendedModel] = useState('prophet');
+  const { forecastType, forecastResult } = useForecast();
+  const [recommendedModel, setRecommendedModel] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
@@ -56,14 +56,24 @@ const ModelSelectionScreen: React.FC = () => {
   useEffect(() => {
     // Log the forecast type from context
     console.log('ModelSelectionScreen - Forecast Type:', forecastType);
+    console.log('Forecast Result:', forecastResult);
     
-    const timer = setTimeout(() => {
+    if (forecastResult) {
       setIsAnalyzing(false);
-      setSelectedModel('prophet');
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, [forecastType]);
+      // Use the model_selected from the API response
+      setRecommendedModel(forecastResult.model_selected);
+      setSelectedModel(forecastResult.model_selected);
+    } else {
+      // If no forecast result, simulate loading
+      const timer = setTimeout(() => {
+        setIsAnalyzing(false);
+        setRecommendedModel('SARIMA');
+        setSelectedModel('SARIMA');
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [forecastType, forecastResult]);
   
   const handleModelSelect = (modelId: string) => {
     setSelectedModel(modelId);
@@ -76,6 +86,9 @@ const ModelSelectionScreen: React.FC = () => {
   const handleContinue = () => {
     navigate('/forecast-setup');
   };
+
+  // Find the selected model details
+  const selectedModelDetails = models.find(model => model.id === selectedModel) || models[0];
 
   return (
     <div className="container max-w-5xl px-4 py-12 mx-auto">
@@ -126,17 +139,42 @@ const ModelSelectionScreen: React.FC = () => {
               </div>
               
               <div>
-                <h3 className="text-lg font-medium mb-2">Prophet is recommended for your data</h3>
+                <h3 className="text-lg font-medium mb-2">{recommendedModel} is recommended for your data</h3>
                 <p className="text-gray-600 mb-4">
                   Based on your business type and forecast type ({forecastType || 'Not specified'}), 
-                  we recommend Prophet for its ability to handle seasonal patterns.
+                  we recommend {recommendedModel} for its ability to handle {forecastType === 'Seasonality' ? 'seasonal patterns' : 'promotional impacts'}.
                 </p>
                 
                 <h4 className="font-medium mb-2">Why this model?</h4>
                 <ul className="list-disc pl-5 space-y-1 text-gray-700">
-                  <li>We detected clear weekly and yearly seasonality in your data</li>
-                  <li>Your data shows multiple trend changepoints that Prophet handles well</li>
-                  <li>You have sufficient historical data for accurate forecasting</li>
+                  {recommendedModel === 'SARIMA' && (
+                    <>
+                      <li>We detected clear weekly and yearly seasonality in your data</li>
+                      <li>Your data shows strong seasonal patterns that SARIMA handles well</li>
+                      <li>You have sufficient historical data for accurate forecasting</li>
+                    </>
+                  )}
+                  {recommendedModel === 'Prophet' && (
+                    <>
+                      <li>We detected multiple seasonal patterns in your data</li>
+                      <li>Your data has trend changepoints that Prophet handles well</li>
+                      <li>Your business data has holiday effects that benefit from Prophet's modeling</li>
+                    </>
+                  )}
+                  {recommendedModel === 'LightGBM' && (
+                    <>
+                      <li>Your data has complex patterns and many features</li>
+                      <li>Non-linear relationships detected in your historical data</li>
+                      <li>External factors significantly impact your forecast</li>
+                    </>
+                  )}
+                  {recommendedModel === 'Ensemble' && (
+                    <>
+                      <li>Your data benefits from multiple modeling approaches</li>
+                      <li>Reduced forecast error through model combination</li>
+                      <li>More stable predictions across different business scenarios</li>
+                    </>
+                  )}
                 </ul>
               </div>
             </div>

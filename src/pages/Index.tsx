@@ -186,10 +186,10 @@ const Index = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Forecasting Goals (Forecast Type)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Forecasting Goals</label>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: 'Promotions', label: 'Promotions' },
+                  { id: 'Promotion', label: 'Promotion' },
                   { id: 'Seasonality', label: 'Seasonality' }
                 ].map((goal) => (
                   <label 
