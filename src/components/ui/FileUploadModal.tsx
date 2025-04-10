@@ -39,7 +39,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUp
     try {
       // Simulating API upload
       console.log('Uploading file:', selectedFile.name);
-      console.log('With forecast type:', forecastType);
+      console.log('With forecast type:', forecastType.toLowerCase());
       
       // Normally we would send this to an API
       // const formData = new FormData();
