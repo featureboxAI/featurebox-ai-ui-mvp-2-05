@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, Info, CheckCircle, LineChart } from 
 import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
+import { useForecast } from '@/context/ForecastContext';
 
 const steps = ["Onboarding", "Data Source", "Model Selection", "Generated Forecast", "Dashboard"];
 
@@ -46,19 +47,23 @@ const models = [
 
 const ModelSelectionScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { forecastType } = useForecast();
   const [recommendedModel, setRecommendedModel] = useState('prophet');
   const [selectedModel, setSelectedModel] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   
   useEffect(() => {
+    // Log the forecast type from context
+    console.log('ModelSelectionScreen - Forecast Type:', forecastType);
+    
     const timer = setTimeout(() => {
       setIsAnalyzing(false);
       setSelectedModel('prophet');
     }, 2000);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [forecastType]);
   
   const handleModelSelect = (modelId: string) => {
     setSelectedModel(modelId);
@@ -84,6 +89,9 @@ const ModelSelectionScreen: React.FC = () => {
       >
         <h1 className="text-3xl font-bold tracking-tight mb-2">Recommended Forecast Model</h1>
         <p className="text-lg text-gray-600">We'll automatically select the best model based on your data.</p>
+        {forecastType && (
+          <p className="mt-2 text-sm font-medium text-primary">Selected forecast type: {forecastType}</p>
+        )}
       </motion.div>
       
       <GlassMorphCard className="mb-8" hover={false}>
@@ -120,7 +128,7 @@ const ModelSelectionScreen: React.FC = () => {
               <div>
                 <h3 className="text-lg font-medium mb-2">Prophet is recommended for your data</h3>
                 <p className="text-gray-600 mb-4">
-                  Based on your business type (Apparel) and product lifecycle (Seasonal), 
+                  Based on your business type and forecast type ({forecastType || 'Not specified'}), 
                   we recommend Prophet for its ability to handle seasonal patterns.
                 </p>
                 
@@ -128,7 +136,7 @@ const ModelSelectionScreen: React.FC = () => {
                 <ul className="list-disc pl-5 space-y-1 text-gray-700">
                   <li>We detected clear weekly and yearly seasonality in your data</li>
                   <li>Your data shows multiple trend changepoints that Prophet handles well</li>
-                  <li>You have sufficient historical data (14 months) for accurate forecasting</li>
+                  <li>You have sufficient historical data for accurate forecasting</li>
                 </ul>
               </div>
             </div>
@@ -227,8 +235,7 @@ const ModelSelectionScreen: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className={`btn-primary ${isAnalyzing ? 'opacity-50 cursor-not-allowed' : ''}`}
-          disabled={isAnalyzing}
+          className="btn-primary"
           onClick={handleContinue}
         >
           Generate Forecast

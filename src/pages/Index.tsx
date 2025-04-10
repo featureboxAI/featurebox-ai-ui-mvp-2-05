@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, ShoppingCart, Briefcase, PlusCircle, ArrowRight } from 'lucide-react';
@@ -7,22 +7,31 @@ import GlassMorphCard from '@/components/ui/GlassMorphCard';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useForecast } from '@/context/ForecastContext';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { setForecastType } = useForecast();
   const [businessType, setBusinessType] = useState('');
   const [salesChannels, setSalesChannels] = useState({ online: '', offline: '' });
   const [forecastingHorizon, setForecastingHorizon] = useState('');
-  const [forecastingGoals, setForecastingGoals] = useState({
-    promotions: false,
-    seasonality: false
-  });
+  const [selectedGoal, setSelectedGoal] = useState('');
 
   const handleCardClick = (path: string) => {
     navigate(path);
   };
 
+  const handleGoalSelect = (goal: string) => {
+    setSelectedGoal(goal);
+    // Update the global context with the selected forecast type
+    setForecastType(goal);
+    console.log('Selected forecast type:', goal);
+  };
+
   const handleContinue = () => {
+    // Update the global context with the selected forecast type
+    setForecastType(selectedGoal);
+    console.log('Navigating to next screen with forecast type:', selectedGoal);
     navigate('/data-source');
   };
 
@@ -65,7 +74,7 @@ const Index = () => {
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
               className="h-full"
-              onClick={() => handleCardClick('/data-insights')}
+              onClick={() => handleCardClick('/data-source')}
             >
               <div className="flex flex-col items-center text-center h-full">
                 <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
@@ -82,7 +91,7 @@ const Index = () => {
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
               className="h-full"
-              onClick={() => handleCardClick('/constraints')}
+              onClick={() => handleCardClick('/data-source')}
             >
               <div className="flex flex-col items-center text-center h-full">
                 <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4">
@@ -177,25 +186,26 @@ const Index = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Forecasting Goals</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Forecasting Goals (Forecast Type)</label>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: 'promotions', label: 'Promotions' },
-                  { id: 'seasonality', label: 'Seasonality' }
+                  { id: 'Promotions', label: 'Promotions' },
+                  { id: 'Seasonality', label: 'Seasonality' }
                 ].map((goal) => (
                   <label 
                     key={goal.id}
                     className={`flex items-center p-3 border rounded-md cursor-pointer transition-colors ${
-                      forecastingGoals[goal.id as keyof typeof forecastingGoals] 
+                      selectedGoal === goal.id 
                         ? 'bg-blue-50 border-blue-500 text-blue-700' 
                         : 'border-gray-300 hover:bg-gray-50'
                     }`}
                   >
                     <input
-                      type="checkbox"
+                      type="radio"
                       className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      checked={forecastingGoals[goal.id as keyof typeof forecastingGoals]}
-                      onChange={(e) => setForecastingGoals({...forecastingGoals, [goal.id]: e.target.checked})}
+                      name="forecastGoal"
+                      checked={selectedGoal === goal.id}
+                      onChange={() => handleGoalSelect(goal.id)}
                     />
                     <span className="text-sm">{goal.label}</span>
                   </label>

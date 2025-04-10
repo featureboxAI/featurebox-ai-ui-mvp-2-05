@@ -1,27 +1,29 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Database, Upload, FileSpreadsheet, ShoppingBag, ArrowLeft, Download } from 'lucide-react';
+import { Database, Upload, FileSpreadsheet, ShoppingBag, ArrowLeft, Download, Check } from 'lucide-react';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
+import FileUploadModal from '../ui/FileUploadModal';
+import { useForecast } from '@/context/ForecastContext';
 
 const steps = ["Onboarding", "Data Source", "Model Selection", "Forecast Setup", "Dashboard"];
 
 const DataSourceScreen: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedSource, setSelectedSource] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const { forecastType, uploadedFile, isUploadSuccessful } = useForecast();
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  
+  useEffect(() => {
+    // Log the forecast type coming from the context
+    console.log('DataSourceScreen - Forecast Type:', forecastType);
+  }, [forecastType]);
   
   const handleSourceSelect = (source: string) => {
-    setSelectedSource(source);
-    
-    // Simulate file upload if a file source is selected
-    if (source === 'csv' || source === 'excel') {
-      setIsUploading(true);
-      setTimeout(() => {
-        setIsUploading(false);
-      }, 2000);
+    if (source === 'csv') {
+      setIsUploadModalOpen(true);
     }
   };
   
@@ -45,6 +47,9 @@ const DataSourceScreen: React.FC = () => {
       >
         <h1 className="text-3xl font-bold tracking-tight mb-2">Connect Your Data</h1>
         <p className="text-lg text-gray-600">Choose how you want to import your sales and inventory data.</p>
+        {forecastType && (
+          <p className="mt-2 text-sm font-medium text-primary">Selected forecast type: {forecastType}</p>
+        )}
       </motion.div>
       
       <motion.div 
@@ -55,7 +60,7 @@ const DataSourceScreen: React.FC = () => {
       >
         <motion.div variants={staggerItem}>
           <GlassMorphCard 
-            className={`h-full ${selectedSource === 'sheets' ? 'ring-2 ring-primary' : ''}`}
+            className={`h-full ${isUploadSuccessful ? 'ring-2 ring-green-500' : ''}`}
             onClick={() => handleSourceSelect('sheets')}
           >
             <div className="flex flex-col items-center text-center h-full">
@@ -77,7 +82,7 @@ const DataSourceScreen: React.FC = () => {
         
         <motion.div variants={staggerItem}>
           <GlassMorphCard 
-            className={`h-full ${['shopify', 'csv', 'excel'].includes(selectedSource || '') ? 'ring-2 ring-primary' : ''}`}
+            className={`h-full`}
             onClick={() => {}}
             hover={false}
           >
@@ -94,61 +99,58 @@ const DataSourceScreen: React.FC = () => {
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <button 
-                  className={`p-4 rounded-lg border transition-all ${
-                    selectedSource === 'shopify' 
-                      ? 'border-primary bg-primary/5'
-                      : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
-                  } flex flex-col items-center`}
-                  onClick={() => handleSourceSelect('shopify')}
+                  className={`p-4 rounded-lg border transition-all
+                    border-gray-200 hover:border-primary/50 hover:bg-gray-50
+                    flex flex-col items-center`}
                 >
                   <ShoppingBag size={24} className="text-gray-700 mb-2" />
                   <span className="text-sm font-medium">Shopify</span>
                 </button>
                 
                 <button 
-                  className={`p-4 rounded-lg border transition-all ${
-                    selectedSource === 'csv' 
-                      ? 'border-primary bg-primary/5'
-                      : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
-                  } flex flex-col items-center`}
+                  className={`p-4 rounded-lg border transition-all
+                    ${isUploadSuccessful ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'}
+                    flex flex-col items-center`}
                   onClick={() => handleSourceSelect('csv')}
                 >
-                  <Upload size={24} className="text-gray-700 mb-2" />
-                  <span className="text-sm font-medium">CSV</span>
+                  {isUploadSuccessful ? (
+                    <Check size={24} className="text-green-600 mb-2" />
+                  ) : (
+                    <Upload size={24} className="text-gray-700 mb-2" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {isUploadSuccessful ? 'Uploaded CSV' : 'CSV'}
+                  </span>
                 </button>
                 
                 <button 
-                  className={`p-4 rounded-lg border transition-all ${
-                    selectedSource === 'excel' 
-                      ? 'border-primary bg-primary/5'
-                      : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
-                  } flex flex-col items-center`}
-                  onClick={() => handleSourceSelect('excel')}
+                  className={`p-4 rounded-lg border transition-all
+                    border-gray-200 hover:border-primary/50 hover:bg-gray-50
+                    flex flex-col items-center`}
                 >
                   <FileSpreadsheet size={24} className="text-gray-700 mb-2" />
                   <span className="text-sm font-medium">Excel</span>
                 </button>
               </div>
               
-              {isUploading && (
-                <div className="bg-blue-50 p-4 rounded-lg mt-auto">
+              {isUploadSuccessful && uploadedFile && (
+                <div className="bg-green-50 p-4 rounded-lg mt-auto">
                   <div className="flex items-center mb-2">
-                    <div className="mr-2 animate-pulse">
-                      <Upload size={18} className="text-blue-600" />
-                    </div>
-                    <span className="text-sm font-medium text-blue-700">Uploading file...</span>
+                    <Check size={18} className="text-green-600 mr-2" />
+                    <span className="text-sm font-medium text-green-700">File uploaded successfully</span>
                   </div>
-                  <div className="w-full bg-blue-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full animate-shimmer bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 background-size-200" style={{ width: '60%' }}></div>
-                  </div>
-                </div>
-              )}
-              
-              {selectedSource === 'shopify' && (
-                <div className="bg-blue-50 p-4 rounded-lg mt-auto">
-                  <p className="text-sm text-blue-700">
-                    <span className="font-medium">Connect your Shopify store:</span> You'll be prompted to authorize access to your store data.
+                  <p className="text-xs text-green-600">
+                    File: {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(2)} KB)
                   </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Forecast type: {forecastType}
+                  </p>
+                  <button 
+                    onClick={() => setIsUploadModalOpen(true)}
+                    className="mt-2 text-xs text-primary underline"
+                  >
+                    Upload a different file
+                  </button>
                 </div>
               )}
             </div>
@@ -193,13 +195,18 @@ const DataSourceScreen: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className={`btn-primary ${!selectedSource ? 'opacity-50 cursor-not-allowed' : ''}`}
-          disabled={!selectedSource}
+          className="btn-primary"
           onClick={handleContinue}
         >
           Continue to Model Selection
         </motion.button>
       </div>
+      
+      <FileUploadModal 
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUploadSuccess={() => {}}
+      />
     </div>
   );
 };

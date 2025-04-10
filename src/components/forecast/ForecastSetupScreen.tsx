@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, AlertTriangle, Sparkles } from 'lucide-react';
@@ -8,6 +9,7 @@ import { pageTransition } from '@/utils/transitions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { getAIInsights } from '@/utils/googleSheetsHelpers';
+import { useForecast } from '@/context/ForecastContext';
 
 const steps = ["Onboarding", "Data Source", "Model Selection", "Generated Forecast", "Dashboard"];
 
@@ -36,6 +38,13 @@ const aiInsights = [
 
 const ForecastSetupScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { forecastType, uploadedFile } = useForecast();
+  
+  useEffect(() => {
+    // Log the forecast type from context
+    console.log('ForecastSetupScreen - Forecast Type:', forecastType);
+    console.log('ForecastSetupScreen - Uploaded File:', uploadedFile?.name);
+  }, [forecastType, uploadedFile]);
   
   const handleBack = () => {
     navigate('/model-selection');
@@ -55,6 +64,12 @@ const ForecastSetupScreen: React.FC = () => {
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Generated Forecast</h1>
         <p className="text-lg text-gray-600">View your forecast predictions below.</p>
+        {forecastType && (
+          <p className="mt-2 text-sm font-medium text-primary">Using forecast type: {forecastType}</p>
+        )}
+        {uploadedFile && (
+          <p className="mt-1 text-sm text-gray-500">File: {uploadedFile.name}</p>
+        )}
       </div>
       
       <motion.div
