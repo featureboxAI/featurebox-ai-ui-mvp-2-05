@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Check, Upload, X, File } from 'lucide-react';
 import { useForecast } from '@/context/ForecastContext';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 interface FileUploadModalProps {
   isOpen: boolean;
