@@ -20,8 +20,10 @@ interface ForecastResult {
 interface ForecastContextType {
   forecastType: string;
   setForecastType: (type: string) => void;
-  uploadedFile: File | null;
-  setUploadedFile: (file: File | null) => void;
+  uploadedFiles: File[];
+  addUploadedFile: (file: File) => void;
+  removeUploadedFile: (fileName: string) => void;
+  clearUploadedFiles: () => void;
   isUploadSuccessful: boolean;
   setIsUploadSuccessful: (success: boolean) => void;
   forecastResult: ForecastResult | null;
@@ -32,16 +34,41 @@ const ForecastContext = createContext<ForecastContextType | undefined>(undefined
 
 export const ForecastProvider = ({ children }: { children: ReactNode }) => {
   const [forecastType, setForecastType] = useState<string>('');
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isUploadSuccessful, setIsUploadSuccessful] = useState<boolean>(false);
   const [forecastResult, setForecastResult] = useState<ForecastResult | null>(null);
+
+  const addUploadedFile = (file: File) => {
+    setUploadedFiles(prev => {
+      // Check if file with same name already exists, if so, replace it
+      const exists = prev.some(f => f.name === file.name);
+      if (exists) {
+        return prev.map(f => f.name === file.name ? file : f);
+      }
+      return [...prev, file];
+    });
+  };
+
+  const removeUploadedFile = (fileName: string) => {
+    setUploadedFiles(prev => prev.filter(file => file.name !== fileName));
+    if (uploadedFiles.length <= 1) {
+      setIsUploadSuccessful(false);
+    }
+  };
+
+  const clearUploadedFiles = () => {
+    setUploadedFiles([]);
+    setIsUploadSuccessful(false);
+  };
 
   return (
     <ForecastContext.Provider value={{ 
       forecastType, 
       setForecastType,
-      uploadedFile,
-      setUploadedFile,
+      uploadedFiles,
+      addUploadedFile,
+      removeUploadedFile,
+      clearUploadedFiles,
       isUploadSuccessful,
       setIsUploadSuccessful,
       forecastResult,

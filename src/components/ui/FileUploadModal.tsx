@@ -1,165 +1,166 @@
 
 import React, { useState, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { X, Upload, FileArchive } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Check, Upload, X, File } from 'lucide-react';
 import { useForecast } from '@/context/ForecastContext';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface FileUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUploadSuccess: () => void;
+  onUploadSuccess?: () => void;
 }
 
-const API_URL = 'https://featurebox-backend.onrender.com/forecast';
-
 const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUploadSuccess }) => {
-  const { forecastType, setUploadedFile, setIsUploadSuccessful, setForecastResult } = useForecast();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { addUploadedFile, setIsUploadSuccessful } = useForecast();
+  const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+  
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+  
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileUpload(e.dataTransfer.files);
     }
   };
-
-  const resetFileInput = () => {
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileUpload(e.target.files);
+    }
+  };
+  
+  const handleFileUpload = (files: FileList) => {
+    setIsUploading(true);
+    
+    const validFiles: File[] = [];
+    
+    // Process all files
+    Array.from(files).forEach(file => {
+      const fileType = file.name.split('.').pop()?.toLowerCase();
+      
+      // Check if file is CSV or ZIP
+      if (fileType === 'csv') {
+        validFiles.push(file);
+      } else if (fileType === 'zip') {
+        validFiles.push(file);
+      } else {
+        toast({
+          title: "Unsupported file format",
+          description: `File ${file.name} is not supported. Please upload CSV or ZIP files only.`,
+          variant: "destructive",
+        });
+      }
+    });
+    
+    // Add all valid files to context
+    if (validFiles.length > 0) {
+      validFiles.forEach(file => {
+        addUploadedFile(file);
+      });
+      
+      setIsUploadSuccessful(true);
+      
+      toast({
+        title: "Files uploaded successfully",
+        description: `${validFiles.length} file(s) have been uploaded.`,
+      });
+      
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
+    }
+    
+    setIsUploading(false);
+    
+    // Clear the input value to allow the same file to be uploaded again if needed
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    setSelectedFile(null);
   };
-
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-    
-    setIsUploading(true);
-    
-    try {
-      // Create form data for API call
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('forecast_type', forecastType.toLowerCase());
-      
-      console.log('Uploading file:', selectedFile.name);
-      console.log('API URL:', API_URL);
-      console.log('With forecast type:', forecastType.toLowerCase());
-      
-      // Make the actual API call
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      console.log('API Response:', result);
-      
-      // Save the forecast result in context
-      setForecastResult(result);
-      
-      // Update context
-      setUploadedFile(selectedFile);
-      setIsUploadSuccessful(true);
-      
-      // Show success message
-      toast.success('File uploaded successfully');
-      onUploadSuccess();
-      onClose();
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast.error('Error uploading file. Please try again.');
-    } finally {
-      setIsUploading(false);
-      resetFileInput();
+  
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
-
+  
+  // Function to mock API call for uploading files
+  const uploadFilesToAPI = async (files: File[]) => {
+    try {
+      // Create a FormData object to send the files
+      const formData = new FormData();
+      files.forEach((file, index) => {
+        formData.append(`file-${index}`, file);
+      });
+      
+      // In a real app, you would send the formData to your API endpoint
+      // For now, we'll just log it to the console
+      console.log('Uploading files to API:', formData);
+      
+      // Mock API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      return true;
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      return false;
+    }
+  };
+  
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        resetFileInput();
-        onClose();
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Upload CSV File</DialogTitle>
+          <DialogTitle>Upload Files</DialogTitle>
+          <DialogDescription>
+            Upload your CSV or ZIP files containing sales and inventory data
+          </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          {!selectedFile ? (
-            <div 
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
+        <div 
+          className={`mt-4 border-2 border-dashed rounded-lg p-8 text-center ${
+            isDragging ? 'border-primary bg-primary/5' : 'border-gray-300'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <input 
+            type="file" 
+            ref={fileInputRef}
+            className="hidden" 
+            onChange={handleFileChange} 
+            accept=".csv,.zip"
+            multiple
+          />
+          <div className="flex flex-col items-center">
+            <Upload size={36} className="text-gray-400 mb-4" />
+            <p className="text-lg font-medium mb-1">Drop files here or click to upload</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Support for CSV and ZIP files
+            </p>
+            <Button 
+              type="button" 
+              onClick={triggerFileInput}
+              disabled={isUploading}
             >
-              <Upload className="h-10 w-10 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-sm font-medium text-gray-900">Click to upload or drag and drop</h3>
-              <p className="text-xs text-gray-500 mt-1">CSV files only</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                className="hidden"
-                onChange={handleFileChange}
-                onClick={e => e.stopPropagation()}
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-              <div className="flex items-center">
-                <File className="h-8 w-8 text-blue-500 mr-3" />
-                <div>
-                  <p className="text-sm font-medium">{selectedFile.name}</p>
-                  <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(2)} KB</p>
-                </div>
-              </div>
-              <button 
-                className="text-gray-500 hover:text-red-500"
-                onClick={resetFileInput}
-              >
-                <X size={18} />
-              </button>
-            </div>
-          )}
-          
-          {selectedFile && (
-            <div className="text-sm text-gray-500">
-              <p>Selected forecast type: <span className="font-medium">{forecastType || 'None'}</span></p>
-            </div>
-          )}
+              {isUploading ? 'Uploading...' : 'Select Files'}
+            </Button>
+          </div>
         </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button 
-            disabled={!selectedFile || isUploading} 
-            onClick={handleUpload}
-            className="flex items-center gap-2"
-          >
-            {isUploading ? (
-              <>
-                <div className="animate-spin">
-                  <Upload size={16} />
-                </div>
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Upload size={16} />
-                Upload
-              </>
-            )}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
