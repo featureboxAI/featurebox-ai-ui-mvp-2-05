@@ -38,13 +38,13 @@ const aiInsights = [
 
 const ForecastSetupScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { forecastType, uploadedFile } = useForecast();
+  const { forecastType, uploadedFiles } = useForecast();
   
   useEffect(() => {
     // Log the forecast type from context
     console.log('ForecastSetupScreen - Forecast Type:', forecastType);
-    console.log('ForecastSetupScreen - Uploaded File:', uploadedFile?.name);
-  }, [forecastType, uploadedFile]);
+    console.log('ForecastSetupScreen - Uploaded Files:', uploadedFiles.map(file => file.name));
+  }, [forecastType, uploadedFiles]);
   
   const handleBack = () => {
     navigate('/model-selection');
@@ -67,8 +67,12 @@ const ForecastSetupScreen: React.FC = () => {
         {forecastType && (
           <p className="mt-2 text-sm font-medium text-primary">Using forecast type: {forecastType}</p>
         )}
-        {uploadedFile && (
-          <p className="mt-1 text-sm text-gray-500">File: {uploadedFile.name}</p>
+        {uploadedFiles && uploadedFiles.length > 0 && (
+          <p className="mt-1 text-sm text-gray-500">
+            {uploadedFiles.length === 1 
+              ? `File: ${uploadedFiles[0].name}` 
+              : `Files: ${uploadedFiles.length} files uploaded`}
+          </p>
         )}
       </div>
       
