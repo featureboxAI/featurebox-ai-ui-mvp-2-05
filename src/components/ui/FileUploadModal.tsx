@@ -1,10 +1,11 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Upload, FileArchive } from 'lucide-react';
+import { FileArchive, Upload, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useForecast } from '@/context/ForecastContext';
 import { toast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -13,15 +14,19 @@ interface FileUploadModalProps {
   acceptedFileTypes?: string;
 }
 
+// Maximum file size: 50MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+
 const FileUploadModal: React.FC<FileUploadModalProps> = ({ 
   isOpen, 
   onClose, 
   onUploadSuccess,
-  acceptedFileTypes = "csv,zip" 
+  acceptedFileTypes = "zip" 
 }) => {
   const { addUploadedFile, setIsUploadSuccessful } = useForecast();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleDragOver = (e: React.DragEvent) => {
@@ -38,44 +43,53 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     setIsDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFileUpload(e.dataTransfer.files);
+      validateAndProcessFiles(e.dataTransfer.files);
     }
   };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      handleFileUpload(e.target.files);
+      validateAndProcessFiles(e.target.files);
     }
   };
   
-  const handleFileUpload = (files: FileList) => {
-    setIsUploading(true);
-    
+  const validateAndProcessFiles = (files: FileList) => {
+    setValidationError(null);
     const validFiles: File[] = [];
+    let hasErrors = false;
     
     // Process all files
     Array.from(files).forEach(file => {
       const fileType = file.name.split('.').pop()?.toLowerCase();
       
-      // Check if file matches accepted type
-      if (acceptedFileTypes === "zip" && fileType === 'zip') {
-        validFiles.push(file);
-      } else if (acceptedFileTypes === "csv" && fileType === 'csv') {
-        validFiles.push(file);
-      } else if (acceptedFileTypes === "csv,zip" && (fileType === 'csv' || fileType === 'zip')) {
-        validFiles.push(file);
-      } else {
-        toast({
-          title: "Unsupported file format",
-          description: `File ${file.name} is not supported. Please upload ${acceptedFileTypes.toUpperCase()} files only.`,
-          variant: "destructive",
-        });
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        setValidationError(`File ${file.name} exceeds the maximum size limit of 50MB`);
+        hasErrors = true;
+        return;
       }
+      
+      // Check file type
+      if (fileType !== 'zip') {
+        setValidationError(`File ${file.name} is not a ZIP file. Please upload ZIP files only.`);
+        hasErrors = true;
+        return;
+      }
+      
+      validFiles.push(file);
     });
     
+    if (!hasErrors && validFiles.length > 0) {
+      handleFileUpload(validFiles);
+    }
+  };
+  
+  const handleFileUpload = (files: File[]) => {
+    setIsUploading(true);
+    
     // Add all valid files to context
-    if (validFiles.length > 0) {
-      validFiles.forEach(file => {
+    if (files.length > 0) {
+      files.forEach(file => {
         addUploadedFile(file);
       });
       
@@ -83,15 +97,18 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
       
       toast({
         title: "Files uploaded successfully",
-        description: `${validFiles.length} file(s) have been uploaded.`,
+        description: `${files.length} file(s) have been uploaded.`,
       });
+      
+      setIsUploading(false);
+      
+      // Close the modal automatically on successful upload
+      onClose();
       
       if (onUploadSuccess) {
         onUploadSuccess();
       }
     }
-    
-    setIsUploading(false);
     
     // Clear the input value to allow the same file to be uploaded again if needed
     if (fileInputRef.current) {
@@ -104,18 +121,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
       fileInputRef.current.click();
     }
   };
-
-  const getAcceptString = () => {
-    if (acceptedFileTypes === "zip") return ".zip";
-    if (acceptedFileTypes === "csv") return ".csv";
-    return ".csv,.zip";
-  };
-  
-  const getFileTypeLabel = () => {
-    if (acceptedFileTypes === "zip") return "ZIP files only";
-    if (acceptedFileTypes === "csv") return "CSV files only";
-    return "CSV and ZIP files";
-  };
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -123,9 +128,16 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         <DialogHeader>
           <DialogTitle>Upload Files</DialogTitle>
           <DialogDescription>
-            Upload your {getFileTypeLabel()}
+            Upload your ZIP files only
           </DialogDescription>
         </DialogHeader>
+        
+        {validationError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            <AlertDescription>{validationError}</AlertDescription>
+          </Alert>
+        )}
         
         <div 
           className={`mt-4 border-2 border-dashed rounded-lg p-8 text-center ${
@@ -140,18 +152,14 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             ref={fileInputRef}
             className="hidden" 
             onChange={handleFileChange} 
-            accept={getAcceptString()}
+            accept=".zip"
             multiple
           />
           <div className="flex flex-col items-center">
-            {acceptedFileTypes === "zip" ? (
-              <FileArchive size={36} className="text-blue-500 mb-4" />
-            ) : (
-              <Upload size={36} className="text-gray-400 mb-4" />
-            )}
+            <FileArchive size={36} className="text-blue-500 mb-4" />
             <p className="text-lg font-medium mb-1">Drop files here or click to upload</p>
             <p className="text-sm text-gray-500 mb-4">
-              {getFileTypeLabel()}
+              ZIP files only (Max 50MB)
             </p>
             <Button 
               type="button" 

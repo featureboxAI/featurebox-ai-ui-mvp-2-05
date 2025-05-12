@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Download, Check, X, File, AlertCircle } from 'lucide-react';
+import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Download, Check, X, File, AlertCircle, Loader } from 'lucide-react';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
@@ -25,6 +25,7 @@ const DataSourceScreen: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
   
   useEffect(() => {
     // Log the forecast type coming from the context
@@ -66,6 +67,7 @@ const DataSourceScreen: React.FC = () => {
     // Reset retry count and error state
     setRetryCount(0);
     setUploadError(null);
+    setIsRetrying(false);
     
     // This is where you would initiate the API upload
     handleUploadToAPI();
@@ -78,7 +80,21 @@ const DataSourceScreen: React.FC = () => {
       // Create a FormData object to send files
       const formData = new FormData();
       
-      // Add each file to the FormData object
+      // Create a metadata object to better structure the request
+      const metadata = {
+        totalFiles: uploadedFiles.length,
+        fileDetails: uploadedFiles.map(file => ({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified
+        }))
+      };
+      
+      // Add metadata as a JSON string
+      formData.append('metadata', JSON.stringify(metadata));
+      
+      // Add each file to the FormData object with a consistent naming pattern
       uploadedFiles.forEach((file, index) => {
         formData.append(`file-${index}`, file);
       });
@@ -103,6 +119,7 @@ const DataSourceScreen: React.FC = () => {
       if (retryCount < MAX_RETRIES) {
         const nextRetryCount = retryCount + 1;
         setRetryCount(nextRetryCount);
+        setIsRetrying(true);
         
         toast({
           title: `Upload failed (Attempt ${nextRetryCount}/${MAX_RETRIES})`,
@@ -112,11 +129,13 @@ const DataSourceScreen: React.FC = () => {
         
         // Retry after a delay (with exponential backoff)
         setTimeout(() => {
+          setIsRetrying(false); 
           handleUploadToAPI();
         }, 1000 * Math.pow(2, nextRetryCount)); // 2s, 4s, 8s
       } else {
         // Max retries reached, show error
         setIsUploading(false);
+        setIsRetrying(false);
         setUploadError("Failed to upload files after multiple attempts. Please try again later.");
         
         toast({
@@ -177,6 +196,7 @@ const DataSourceScreen: React.FC = () => {
   const resetUpload = () => {
     setUploadError(null);
     setRetryCount(0);
+    setIsRetrying(false);
   };
 
   return (
@@ -197,37 +217,11 @@ const DataSourceScreen: React.FC = () => {
       </motion.div>
       
       <motion.div 
-        className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"
+        className="grid grid-cols-1 gap-6 mb-12"
         variants={staggerContainer}
         initial="initial"
         animate="animate"
       >
-        {/* Current Sheet Data option - Commented out as requested */}
-        <motion.div variants={staggerItem} style={{ opacity: 0.5 }}>
-          <GlassMorphCard 
-            className="h-full opacity-50 cursor-not-allowed"
-            hover={false}
-          >
-            <div className="flex flex-col items-center text-center h-full relative">
-              <div className="absolute inset-0 bg-gray-200 bg-opacity-50 flex items-center justify-center">
-                <p className="text-gray-600 font-medium">Currently Disabled</p>
-              </div>
-              <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4">
-                <FileSpreadsheet size={28} />
-              </div>
-              <h3 className="text-xl font-medium mb-3">Use Current Sheet Data</h3>
-              <p className="text-gray-600 mb-6">
-                We will read the data from your currently active sheet. Please ensure it follows the template structure.
-              </p>
-              <div className="bg-green-50 p-4 rounded-lg w-full mt-auto">
-                <p className="text-sm text-green-700">
-                  <span className="font-medium">Ready to use:</span> This option works with your existing sheet data.
-                </p>
-              </div>
-            </div>
-          </GlassMorphCard>
-        </motion.div>
-        
         <motion.div variants={staggerItem}>
           <GlassMorphCard 
             className={`h-full`}
@@ -313,6 +307,7 @@ const DataSourceScreen: React.FC = () => {
                         size="sm" 
                         onClick={() => removeUploadedFile(file.name)}
                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        disabled={isUploading}
                       >
                         <X size={18} />
                       </Button>
@@ -328,6 +323,18 @@ const DataSourceScreen: React.FC = () => {
                   Upload Files
                 </Button>
               </div>
+            )}
+            
+            {isRetrying && (
+              <Alert className="mt-4 bg-yellow-50 border-yellow-200">
+                <div className="flex items-center">
+                  <Loader size={16} className="text-yellow-600 mr-2 animate-spin" />
+                  <AlertTitle className="text-yellow-700">Retrying upload</AlertTitle>
+                </div>
+                <AlertDescription className="text-yellow-600">
+                  Attempt {retryCount} of {MAX_RETRIES}. Please wait...
+                </AlertDescription>
+              </Alert>
             )}
             
             {uploadError && (
@@ -353,6 +360,7 @@ const DataSourceScreen: React.FC = () => {
                 variant="outline"
                 onClick={() => setIsUploadModalOpen(true)}
                 className="flex items-center"
+                disabled={isUploading || isRetrying}
               >
                 <Upload size={16} className="mr-2" />
                 Upload ZIP File
@@ -376,11 +384,11 @@ const DataSourceScreen: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className={`btn-primary ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className={`btn-primary ${isUploading || isRetrying ? 'opacity-70 cursor-not-allowed' : ''}`}
           onClick={handleContinue}
-          disabled={isUploading}
+          disabled={isUploading || isRetrying}
         >
-          {isUploading ? 'Uploading...' : 'Continue to Model Selection'}
+          {isUploading ? 'Uploading...' : isRetrying ? `Retrying (${retryCount}/${MAX_RETRIES})` : 'Continue to Model Selection'}
         </motion.button>
       </div>
       
