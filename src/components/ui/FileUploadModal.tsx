@@ -10,9 +10,15 @@ interface FileUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUploadSuccess?: () => void;
+  acceptedFileTypes?: string;
 }
 
-const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUploadSuccess }) => {
+const FileUploadModal: React.FC<FileUploadModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onUploadSuccess,
+  acceptedFileTypes = "csv,zip" 
+}) => {
   const { addUploadedFile, setIsUploadSuccessful } = useForecast();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -51,15 +57,17 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUp
     Array.from(files).forEach(file => {
       const fileType = file.name.split('.').pop()?.toLowerCase();
       
-      // Check if file is CSV or ZIP
-      if (fileType === 'csv') {
+      // Check if file matches accepted type
+      if (acceptedFileTypes === "zip" && fileType === 'zip') {
         validFiles.push(file);
-      } else if (fileType === 'zip') {
+      } else if (acceptedFileTypes === "csv" && fileType === 'csv') {
+        validFiles.push(file);
+      } else if (acceptedFileTypes === "csv,zip" && (fileType === 'csv' || fileType === 'zip')) {
         validFiles.push(file);
       } else {
         toast({
           title: "Unsupported file format",
-          description: `File ${file.name} is not supported. Please upload CSV or ZIP files only.`,
+          description: `File ${file.name} is not supported. Please upload ${acceptedFileTypes.toUpperCase()} files only.`,
           variant: "destructive",
         });
       }
@@ -96,28 +104,17 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUp
       fileInputRef.current.click();
     }
   };
+
+  const getAcceptString = () => {
+    if (acceptedFileTypes === "zip") return ".zip";
+    if (acceptedFileTypes === "csv") return ".csv";
+    return ".csv,.zip";
+  };
   
-  // Function to mock API call for uploading files
-  const uploadFilesToAPI = async (files: File[]) => {
-    try {
-      // Create a FormData object to send the files
-      const formData = new FormData();
-      files.forEach((file, index) => {
-        formData.append(`file-${index}`, file);
-      });
-      
-      // In a real app, you would send the formData to your API endpoint
-      // For now, we'll just log it to the console
-      console.log('Uploading files to API:', formData);
-      
-      // Mock API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return true;
-    } catch (error) {
-      console.error('Error uploading files:', error);
-      return false;
-    }
+  const getFileTypeLabel = () => {
+    if (acceptedFileTypes === "zip") return "ZIP files only";
+    if (acceptedFileTypes === "csv") return "CSV files only";
+    return "CSV and ZIP files";
   };
   
   return (
@@ -126,7 +123,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUp
         <DialogHeader>
           <DialogTitle>Upload Files</DialogTitle>
           <DialogDescription>
-            Upload your CSV or ZIP files containing sales and inventory data
+            Upload your {getFileTypeLabel()}
           </DialogDescription>
         </DialogHeader>
         
@@ -143,14 +140,18 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ isOpen, onClose, onUp
             ref={fileInputRef}
             className="hidden" 
             onChange={handleFileChange} 
-            accept=".csv,.zip"
+            accept={getAcceptString()}
             multiple
           />
           <div className="flex flex-col items-center">
-            <Upload size={36} className="text-gray-400 mb-4" />
+            {acceptedFileTypes === "zip" ? (
+              <FileArchive size={36} className="text-blue-500 mb-4" />
+            ) : (
+              <Upload size={36} className="text-gray-400 mb-4" />
+            )}
             <p className="text-lg font-medium mb-1">Drop files here or click to upload</p>
             <p className="text-sm text-gray-500 mb-4">
-              Support for CSV and ZIP files
+              {getFileTypeLabel()}
             </p>
             <Button 
               type="button" 
