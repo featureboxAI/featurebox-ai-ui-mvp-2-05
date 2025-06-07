@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -13,14 +12,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-const steps = ["Onboarding", "Data Source", "Model Selection", "Forecast Setup", "Dashboard"];
+const steps = ["Onboarding", "Data Source", "Generated Forecast", "Dashboard"];
 
 // Maximum number of retry attempts
 const MAX_RETRIES = 3;
 
 const DataSourceScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { forecastType, uploadedFiles, removeUploadedFile, isUploadSuccessful } = useForecast();
+  const { forecastType, uploadedFiles, removeUploadedFile, isUploadSuccessful, setForecastResult } = useForecast();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -43,7 +42,7 @@ const DataSourceScreen: React.FC = () => {
     navigate('/');
   };
   
-  const handleContinue = () => {
+  const handleGenerateForecast = () => {
     if (uploadedFiles.length === 0) {
       toast({
         title: "No files uploaded",
@@ -80,35 +79,39 @@ const DataSourceScreen: React.FC = () => {
       // Create a FormData object to send files
       const formData = new FormData();
       
-      // Create a metadata object to better structure the request
-      const metadata = {
-        totalFiles: uploadedFiles.length,
-        fileDetails: uploadedFiles.map(file => ({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified
-        }))
-      };
-      
-      // Add metadata as a JSON string
-      formData.append('metadata', JSON.stringify(metadata));
-      
-      // Add each file to the FormData object with a consistent naming pattern
-      uploadedFiles.forEach((file, index) => {
-        formData.append(`file-${index}`, file);
-      });
+      // Add the first ZIP file to the FormData
+      if (uploadedFiles.length > 0) {
+        formData.append('file', uploadedFiles[0], uploadedFiles[0].name);
+      }
       
       console.log('Uploading files to API...');
       console.log('Files to upload:', uploadedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`));
       
-      // Make the API call to FastAPI backend
-      const response = await sendToFastAPI(formData);
+      // Make the API call to the actual endpoint
+      const response = await fetch('https://featurebox-ai-service-666676702816.us-west1.run.app/upload/', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+        },
+        body: formData,
+      });
       
       if (response.ok) {
         console.log('Files successfully uploaded to API');
+        
+        // The response should be a downloadable file, so we'll store it for later use
+        const blob = await response.blob();
+        const filename = response.headers.get('content-disposition')?.match(/filename="([^"]+)"/)?.[1] || 'forecast_results.xlsx';
+        
+        // Store the forecast result
+        setForecastResult({
+          model_selected: 'SARIMA',
+          downloadableFile: blob,
+          filename: filename
+        });
+        
         setIsUploading(false);
-        navigate('/model-selection');
+        navigate('/forecast-setup');
       } else {
         throw new Error(`API responded with status: ${response.status}`);
       }
@@ -145,36 +148,6 @@ const DataSourceScreen: React.FC = () => {
         });
       }
     }
-  };
-  
-  // Function to send files to FastAPI backend
-  const sendToFastAPI = async (formData: FormData) => {
-    // Replace with your actual FastAPI endpoint
-    const API_ENDPOINT = "https://your-fastapi-backend.com/upload";
-    
-    // For demonstration purposes, we'll simulate a response
-    // In a real app, you would replace this with an actual fetch call
-    
-    // Simulate API call with 50% success rate for testing retry logic
-    // Remove this in production and use the actual fetch call
-    return new Promise<Response>((resolve) => {
-      setTimeout(() => {
-        // Mock Response object
-        const response = {
-          ok: Math.random() > 0.5, // 50% chance of success for testing
-          status: Math.random() > 0.5 ? 200 : 500,
-          json: async () => ({ message: "Upload processed" })
-        } as Response;
-        
-        resolve(response);
-        
-        // In production, use this instead:
-        // return fetch(API_ENDPOINT, {
-        //   method: 'POST',
-        //   body: formData,
-        // });
-      }, 1000);
-    });
   };
   
   const formatFileSize = (bytes: number): string => {
@@ -385,10 +358,10 @@ const DataSourceScreen: React.FC = () => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className={`btn-primary ${isUploading || isRetrying ? 'opacity-70 cursor-not-allowed' : ''}`}
-          onClick={handleContinue}
+          onClick={handleGenerateForecast}
           disabled={isUploading || isRetrying}
         >
-          {isUploading ? 'Uploading...' : isRetrying ? `Retrying (${retryCount}/${MAX_RETRIES})` : 'Continue to Model Selection'}
+          {isUploading ? 'Generating...' : isRetrying ? `Retrying (${retryCount}/${MAX_RETRIES})` : 'Generate Forecast'}
         </motion.button>
       </div>
       

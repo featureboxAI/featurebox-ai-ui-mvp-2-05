@@ -17,8 +17,10 @@ const Index = () => {
   const [forecastingHorizon, setForecastingHorizon] = useState('');
   const [selectedGoal, setSelectedGoal] = useState('');
 
-  const handleCardClick = (path: string) => {
-    navigate(path);
+  const handleCardClick = (path: string, isEnabled: boolean = true) => {
+    if (isEnabled) {
+      navigate(path);
+    }
   };
 
   const handleGoalSelect = (goal: string) => {
@@ -57,7 +59,7 @@ const Index = () => {
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
               className="h-full"
-              onClick={() => handleCardClick('/data-source')}
+              onClick={() => handleCardClick('/data-source', true)}
             >
               <div className="flex flex-col items-center text-center h-full">
                 <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4">
@@ -73,15 +75,15 @@ const Index = () => {
 
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
-              className="h-full"
-              onClick={() => handleCardClick('/data-source')}
+              className="h-full opacity-50 cursor-not-allowed"
+              onClick={() => handleCardClick('/data-source', false)}
             >
               <div className="flex flex-col items-center text-center h-full">
                 <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
                   <Briefcase size={28} />
                 </div>
-                <h3 className="text-xl font-medium mb-3">Scenario Planning</h3>
-                <p className="text-gray-600">
+                <h3 className="text-xl font-medium mb-3 text-gray-500">Scenario Planning</h3>
+                <p className="text-gray-400">
                   Test for "What-if" scenarios.
                 </p>
               </div>
@@ -90,15 +92,15 @@ const Index = () => {
 
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
-              className="h-full"
-              onClick={() => handleCardClick('/data-source')}
+              className="h-full opacity-50 cursor-not-allowed"
+              onClick={() => handleCardClick('/data-source', false)}
             >
               <div className="flex flex-col items-center text-center h-full">
                 <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4">
                   <PlusCircle size={28} />
                 </div>
-                <h3 className="text-xl font-medium mb-3">New Product Introduction</h3>
-                <p className="text-gray-600">
+                <h3 className="text-xl font-medium mb-3 text-gray-500">New Product Introduction</h3>
+                <p className="text-gray-400">
                   Estimate the quantity of product without historical data.
                 </p>
               </div>
@@ -106,17 +108,18 @@ const Index = () => {
           </motion.div>
         </motion.div>
 
-        <Card className="mb-8">
+        <Card className="mb-8 opacity-50">
           <CardContent className="pt-6">
-            <h2 className="text-xl font-semibold mb-6">Business Context</h2>
+            <h2 className="text-xl font-semibold mb-6 text-gray-500">Business Context</h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Business Type</label>
                 <select 
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
                   value={businessType}
                   onChange={(e) => setBusinessType(e.target.value)}
+                  disabled
                 >
                   <option value="">Select Type</option>
                   <option value="apparel">Apparel</option>
@@ -129,16 +132,12 @@ const Index = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Forecasting Horizon</label>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Forecasting Horizon</label>
                 <div className="grid grid-cols-4 gap-2">
                   {[30, 60, 90, 180].map((days) => (
                     <label 
                       key={days}
-                      className={`flex items-center justify-center p-2 border rounded-md cursor-pointer transition-colors ${
-                        forecastingHorizon === days.toString() 
-                          ? 'bg-blue-50 border-blue-500 text-blue-700' 
-                          : 'border-gray-300 hover:bg-gray-50'
-                      }`}
+                      className="flex items-center justify-center p-2 border rounded-md cursor-not-allowed bg-gray-100 border-gray-300 text-gray-400"
                     >
                       <input
                         type="radio"
@@ -147,6 +146,7 @@ const Index = () => {
                         value={days}
                         checked={forecastingHorizon === days.toString()}
                         onChange={(e) => setForecastingHorizon(e.target.value)}
+                        disabled
                       />
                       <span>{days} days</span>
                     </label>
@@ -156,37 +156,39 @@ const Index = () => {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sales Channel Split (%)</label>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Sales Channel Split (%)</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Online</label>
+                  <label className="block text-sm text-gray-400 mb-1">Online</label>
                   <input
                     type="number"
                     min="0"
                     max="100"
                     placeholder="e.g. 60"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
                     value={salesChannels.online}
                     onChange={(e) => setSalesChannels({...salesChannels, online: e.target.value})}
+                    disabled
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Offline</label>
+                  <label className="block text-sm text-gray-400 mb-1">Offline</label>
                   <input
                     type="number"
                     min="0"
                     max="100"
                     placeholder="e.g. 40"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
                     value={salesChannels.offline}
                     onChange={(e) => setSalesChannels({...salesChannels, offline: e.target.value})}
+                    disabled
                   />
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Forecasting Goals</label>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Forecasting Goals</label>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { id: 'Promotion', label: 'Promotion' },

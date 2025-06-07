@@ -3,6 +3,8 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface ForecastResult {
   model_selected: string;
+  downloadableFile?: Blob;
+  filename?: string;
   sarima?: {
     forecast: number[];
     lower_bound: number[];

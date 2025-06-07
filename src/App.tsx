@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DataSourceScreen from "./components/data/DataSourceScreen";
-import ModelSelectionScreen from "./components/models/ModelSelectionScreen";
 import ForecastSetupScreen from "./components/forecast/ForecastSetupScreen";
 import Dashboard from "./pages/Dashboard";
 import { ForecastProvider } from "./context/ForecastContext";
@@ -24,7 +23,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/data-source" element={<DataSourceScreen />} />
-            <Route path="/model-selection" element={<ModelSelectionScreen />} />
             <Route path="/forecast-setup" element={<ForecastSetupScreen />} />
             <Route path="/dashboard" element={<Dashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

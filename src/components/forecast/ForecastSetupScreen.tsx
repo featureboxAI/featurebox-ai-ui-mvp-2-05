@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { getAIInsights } from '@/utils/googleSheetsHelpers';
 import { useForecast } from '@/context/ForecastContext';
 
-const steps = ["Onboarding", "Data Source", "Model Selection", "Generated Forecast", "Dashboard"];
+const steps = ["Onboarding", "Data Source", "Generated Forecast", "Dashboard"];
 
 // Sample forecast data with products matching dashboard
 const forecastData = [
@@ -38,7 +38,7 @@ const aiInsights = [
 
 const ForecastSetupScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { forecastType, uploadedFiles } = useForecast();
+  const { forecastType, uploadedFiles, forecastResult } = useForecast();
   
   useEffect(() => {
     // Log the forecast type from context
@@ -47,11 +47,29 @@ const ForecastSetupScreen: React.FC = () => {
   }, [forecastType, uploadedFiles]);
   
   const handleBack = () => {
-    navigate('/model-selection');
+    navigate('/data-source');
   };
   
   const handleContinue = () => {
     navigate('/dashboard');
+  };
+
+  const handleExportToExcel = () => {
+    if (forecastResult?.downloadableFile) {
+      // Create a URL for the blob and download it
+      const url = URL.createObjectURL(forecastResult.downloadableFile);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = forecastResult.filename || 'forecast_results.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      // Fallback - create a sample Excel file
+      console.log('Exporting to Excel...');
+      // You would implement actual Excel export logic here
+    }
   };
 
   return (
@@ -59,7 +77,7 @@ const ForecastSetupScreen: React.FC = () => {
       className="container max-w-5xl px-4 py-12 mx-auto"
       {...pageTransition}
     >
-      <ProgressIndicator steps={steps} currentStep={3} />
+      <ProgressIndicator steps={steps} currentStep={2} />
       
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight mb-2">Generated Forecast</h1>
@@ -84,9 +102,12 @@ const ForecastSetupScreen: React.FC = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm mb-8 border border-gray-100">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Forecast Results</h2>
-            <button className="text-primary flex items-center text-sm font-medium">
+            <button 
+              className="text-primary flex items-center text-sm font-medium"
+              onClick={handleExportToExcel}
+            >
               <Download size={16} className="mr-1" />
-              Export to CSV
+              Export to Excel
             </button>
           </div>
           
@@ -136,24 +157,24 @@ const ForecastSetupScreen: React.FC = () => {
           </div>
         </div>
         
-        <Card className="mb-8">
+        <Card className="mb-8 opacity-50">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg">AI Insights & Explanation</h3>
+              <Sparkles className="h-5 w-5 text-gray-400" />
+              <h3 className="font-semibold text-lg text-gray-500">AI Insights & Explanation</h3>
             </div>
             
-            <p className="mb-4 text-sm text-gray-600">
+            <p className="mb-4 text-sm text-gray-400">
               Our AI has analyzed your historical data and generated the following insights about your forecasted demand:
             </p>
             
             <div className="space-y-4">
               {aiInsights.map((insight, index) => (
-                <div key={index} className="flex gap-3 items-start bg-slate-50 p-3 rounded-md">
-                  <div className="bg-primary/10 text-primary font-medium rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">
+                <div key={index} className="flex gap-3 items-start bg-gray-100 p-3 rounded-md">
+                  <div className="bg-gray-200 text-gray-400 font-medium rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">
                     {index + 1}
                   </div>
-                  <p className="text-sm">{insight}</p>
+                  <p className="text-sm text-gray-400">{insight}</p>
                 </div>
               ))}
             </div>
