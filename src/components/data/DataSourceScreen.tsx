@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -14,17 +15,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const steps = ["Onboarding", "Data Source", "Generated Forecast", "Dashboard"];
 
-// Maximum number of retry attempts
-const MAX_RETRIES = 3;
-
 const DataSourceScreen: React.FC = () => {
   const navigate = useNavigate();
   const { forecastType, uploadedFiles, removeUploadedFile, isUploadSuccessful, setForecastResult } = useForecast();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
   
   useEffect(() => {
     // Log the forecast type coming from the context
@@ -63,10 +59,8 @@ const DataSourceScreen: React.FC = () => {
       return;
     }
     
-    // Reset retry count and error state
-    setRetryCount(0);
+    // Reset error state
     setUploadError(null);
-    setIsRetrying(false);
     
     // This is where you would initiate the API upload
     handleUploadToAPI();
@@ -87,18 +81,14 @@ const DataSourceScreen: React.FC = () => {
       console.log('Uploading files to API...');
       console.log('Files to upload:', uploadedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`));
       
-      // Make the API call with proper CORS handling
+      // Make the API call without CORS restrictions
       const response = await fetch('https://featurebox-ai-service-666676702816.us-west1.run.app/upload/', {
         method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Accept': 'application/json, application/octet-stream, */*',
-        },
         body: formData,
       });
       
       console.log('API Response status:', response.status);
-      console.log('API Response headers:', response.headers);
+      console.log('API Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.ok) {
         console.log('Files successfully uploaded to API');
@@ -137,30 +127,27 @@ const DataSourceScreen: React.FC = () => {
     } catch (error) {
       console.error('Error uploading files:', error);
       
-      // Check if we should retry
-      if (retryCount < MAX_RETRIES) {
-        const nextRetryCount = retryCount + 1;
-        setRetryCount(nextRetryCount);
-        setIsRetrying(true);
-        
-        toast({
-          title: `Upload failed (Attempt ${nextRetryCount}/${MAX_RETRIES})`,
-          description: "Retrying upload...",
-          variant: "destructive",
-        });
-        
-        // Retry after a delay (with exponential backoff)
-        setTimeout(() => {
-          setIsRetrying(false); 
-          handleUploadToAPI();
-        }, 1000 * Math.pow(2, nextRetryCount)); // 2s, 4s, 8s
-      } else {
-        // Max retries reached, show error
+      // Commented out retry mechanism as requested
+      // if (retryCount < MAX_RETRIES) {
+      //   const nextRetryCount = retryCount + 1;
+      //   setRetryCount(nextRetryCount);
+      //   setIsRetrying(true);
+      //   
+      //   toast({
+      //     title: `Upload failed (Attempt ${nextRetryCount}/${MAX_RETRIES})`,
+      //     description: "Retrying upload...",
+      //     variant: "destructive",
+      //   });
+      //   
+      //   setTimeout(() => {
+      //     setIsRetrying(false); 
+      //     handleUploadToAPI();
+      //   }, 1000 * Math.pow(2, nextRetryCount));
+      // } else {
         setIsUploading(false);
-        setIsRetrying(false);
         
         // Provide more specific error messages
-        let errorMessage = "Failed to upload files to the server after multiple attempts.";
+        let errorMessage = "Failed to upload files to the server.";
         if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
           errorMessage = "Network error: Unable to connect to the forecast service. Please check your internet connection and try again.";
         }
@@ -172,7 +159,7 @@ const DataSourceScreen: React.FC = () => {
           description: errorMessage,
           variant: "destructive",
         });
-      }
+      // }
     }
   };
   
@@ -194,8 +181,6 @@ const DataSourceScreen: React.FC = () => {
 
   const resetUpload = () => {
     setUploadError(null);
-    setRetryCount(0);
-    setIsRetrying(false);
   };
 
   return (
@@ -324,18 +309,6 @@ const DataSourceScreen: React.FC = () => {
               </div>
             )}
             
-            {isRetrying && (
-              <Alert className="mt-4 bg-yellow-50 border-yellow-200">
-                <div className="flex items-center">
-                  <Loader size={16} className="text-yellow-600 mr-2 animate-spin" />
-                  <AlertTitle className="text-yellow-700">Retrying upload</AlertTitle>
-                </div>
-                <AlertDescription className="text-yellow-600">
-                  Attempt {retryCount} of {MAX_RETRIES}. Please wait...
-                </AlertDescription>
-              </Alert>
-            )}
-            
             {uploadError && (
               <Alert variant="destructive" className="mt-4">
                 <AlertCircle className="h-4 w-4" />
@@ -359,7 +332,7 @@ const DataSourceScreen: React.FC = () => {
                 variant="outline"
                 onClick={() => setIsUploadModalOpen(true)}
                 className="flex items-center"
-                disabled={isUploading || isRetrying}
+                disabled={isUploading}
               >
                 <Upload size={16} className="mr-2" />
                 Upload ZIP File
@@ -383,11 +356,11 @@ const DataSourceScreen: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className={`btn-primary ${isUploading || isRetrying ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className={`btn-primary ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
           onClick={handleGenerateForecast}
-          disabled={isUploading || isRetrying}
+          disabled={isUploading}
         >
-          {isUploading ? 'Generating...' : isRetrying ? `Retrying (${retryCount}/${MAX_RETRIES})` : 'Generate Forecast'}
+          {isUploading ? 'Generating...' : 'Generate Forecast'}
         </motion.button>
       </div>
       
