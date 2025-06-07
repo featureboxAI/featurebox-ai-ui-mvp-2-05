@@ -87,21 +87,31 @@ const DataSourceScreen: React.FC = () => {
       console.log('Uploading files to API...');
       console.log('Files to upload:', uploadedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`));
       
-      // Make the API call to the actual endpoint
+      // Make the API call with proper CORS handling
       const response = await fetch('https://featurebox-ai-service-666676702816.us-west1.run.app/upload/', {
         method: 'POST',
+        mode: 'cors',
         headers: {
-          'accept': 'application/json',
+          'Accept': 'application/json, application/octet-stream, */*',
         },
         body: formData,
       });
       
+      console.log('API Response status:', response.status);
+      console.log('API Response headers:', response.headers);
+      
       if (response.ok) {
         console.log('Files successfully uploaded to API');
+        
+        // Check if the response is a downloadable file
+        const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
         
         // The response should be a downloadable file, so we'll store it for later use
         const blob = await response.blob();
         const filename = response.headers.get('content-disposition')?.match(/filename="([^"]+)"/)?.[1] || 'forecast_results.xlsx';
+        
+        console.log('File downloaded successfully:', filename, 'Size:', blob.size);
         
         // Store the forecast result
         setForecastResult({
@@ -111,9 +121,18 @@ const DataSourceScreen: React.FC = () => {
         });
         
         setIsUploading(false);
+        setUploadError(null);
+        
+        toast({
+          title: "Upload successful",
+          description: "Your forecast has been generated successfully.",
+        });
+        
         navigate('/forecast-setup');
       } else {
-        throw new Error(`API responded with status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API Error Response:', response.status, errorText);
+        throw new Error(`API responded with status: ${response.status} - ${errorText}`);
       }
     } catch (error) {
       console.error('Error uploading files:', error);
@@ -139,11 +158,18 @@ const DataSourceScreen: React.FC = () => {
         // Max retries reached, show error
         setIsUploading(false);
         setIsRetrying(false);
-        setUploadError("Failed to upload files after multiple attempts. Please try again later.");
+        
+        // Provide more specific error messages
+        let errorMessage = "Failed to upload files to the server after multiple attempts.";
+        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+          errorMessage = "Network error: Unable to connect to the forecast service. Please check your internet connection and try again.";
+        }
+        
+        setUploadError(errorMessage);
         
         toast({
           title: "Upload failed",
-          description: "Failed to upload files to the server after multiple attempts.",
+          description: errorMessage,
           variant: "destructive",
         });
       }
