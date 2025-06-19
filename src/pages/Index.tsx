@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LineChart, ShoppingCart, Briefcase, PlusCircle, ArrowRight } from 'lucide-react';
+import { LineChart, ShoppingCart, Briefcase, PlusCircle, ArrowRight, LogIn } from 'lucide-react';
 import GlassMorphCard from '@/components/ui/GlassMorphCard';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,22 @@ const Index = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl font-bold tracking-tight mb-2">FeatureBox AI</h1>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex-1"></div>
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold tracking-tight mb-2">FeatureBox AI</h1>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <Button 
+                onClick={() => navigate('/login')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <LogIn size={16} />
+                Login
+              </Button>
+            </div>
+          </div>
           <p className="text-lg text-gray-600">Welcome to your intelligent demand forecasting assistant</p>
         </motion.div>
 
