@@ -115,7 +115,7 @@ const Login = () => {
                     <Checkbox
                       id="remember"
                       checked={rememberMe}
-                      onCheckedChange={setRememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked === true)}
                       className="border-white/30 data-[state=checked]:bg-white data-[state=checked]:text-purple-600"
                     />
                     <Label htmlFor="remember" className="text-white/80 text-sm">
