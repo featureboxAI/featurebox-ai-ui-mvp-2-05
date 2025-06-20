@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -52,14 +51,7 @@ const Index = () => {
               <h1 className="text-3xl font-bold tracking-tight mb-2">FeatureBox AI</h1>
             </div>
             <div className="flex-1 flex justify-end">
-              <Button 
-                onClick={() => navigate('/login')}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <LogIn size={16} />
-                Login
-              </Button>
+              {/* This div is kept to balance the layout and center the title */}
             </div>
           </div>
           <p className="text-lg text-gray-600">Welcome to your intelligent demand forecasting assistant</p>
