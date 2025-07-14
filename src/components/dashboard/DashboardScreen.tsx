@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Download, 
-  FileSpreadsheet
+  FileSpreadsheet,
+  LogOut
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -79,6 +79,19 @@ const DashboardScreen: React.FC = () => {
           <Button onClick={handleExportData}>
             <Download className="mr-2 h-4 w-4" />
             Export Results
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("tenant");
+              localStorage.removeItem("backend_url");
+              window.location.href = "/";
+            }}
+            className="flex items-center gap-2"
+          >
+            <LogOut size={16} />
+            Logout
           </Button>
         </div>
       </div>

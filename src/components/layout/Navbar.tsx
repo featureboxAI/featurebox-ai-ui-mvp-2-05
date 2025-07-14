@@ -49,6 +49,15 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
           <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
             Contact
           </Link>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-red-600"
+          >
+            <LogOut size={16} />
+            Logout
+          </Button>
         </nav>
       </div>
     </motion.header>
