@@ -82,7 +82,7 @@ const DataSourceScreen: React.FC = () => {
       console.log('Files to upload:', uploadedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`));
       
       // Make the API call without CORS restrictions
-      const response = await fetch('https://featurebox-ai-service-666676702816.us-west1.run.app/upload/', {
+      const response = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/upload/`, {
         method: 'POST',
         body: formData,
       });
