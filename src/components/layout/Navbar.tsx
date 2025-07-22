@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
@@ -11,6 +11,11 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
+  const handleLogout = () => {
+    // Add logout logic here
+    console.log('User logged out');
+  };
+
   return (
     <motion.header 
       className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md"
