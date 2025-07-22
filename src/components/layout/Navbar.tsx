@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
 
 interface NavbarProps {
   toggleSidebar?: () => void;
@@ -11,9 +12,10 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
+  const { logout, user, isAuthenticated, loginWithRedirect } = useAuth0();
+
   const handleLogout = () => {
-    // Add logout logic here
-    console.log('User logged out');
+    logout({ logoutParams: { returnTo: window.location.origin } });
   };
 
   return (
@@ -54,15 +56,32 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
           <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
             Contact
           </Link>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-red-600"
-          >
-            <LogOut size={16} />
-            Logout
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <div className="flex items-center space-x-2 text-sm">
+                <User size={16} />
+                <span>{user?.name || user?.email}</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-red-600"
+              >
+                <LogOut size={16} />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => loginWithRedirect()}
+              className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary"
+            >
+              Login
+            </Button>
+          )}
         </nav>
       </div>
     </motion.header>

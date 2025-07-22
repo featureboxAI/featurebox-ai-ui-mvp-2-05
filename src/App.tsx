@@ -10,6 +10,7 @@ import DataSourceScreen from "./components/data/DataSourceScreen";
 import ForecastSetupScreen from "./components/forecast/ForecastSetupScreen";
 import Dashboard from "./pages/Dashboard";
 import { ForecastProvider } from "./context/ForecastContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -24,9 +25,21 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/home" element={<Index />} />
-            <Route path="/data-source" element={<DataSourceScreen />} />
-            <Route path="/forecast-setup" element={<ForecastSetupScreen />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/data-source" element={
+              <ProtectedRoute>
+                <DataSourceScreen />
+              </ProtectedRoute>
+            } />
+            <Route path="/forecast-setup" element={
+              <ProtectedRoute>
+                <ForecastSetupScreen />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
