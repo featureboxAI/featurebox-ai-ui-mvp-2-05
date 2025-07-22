@@ -11,7 +11,7 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/home');
     }
   }, [isAuthenticated, navigate]);
 

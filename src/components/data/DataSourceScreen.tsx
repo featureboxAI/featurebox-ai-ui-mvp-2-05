@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Download, Check, X, File, AlertCircle, Loader } from 'lucide-react';
+import { useAuth0 } from '@auth0/auth0-react';
+import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Download, Check, X, File, AlertCircle, Loader, LogOut } from 'lucide-react';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
@@ -17,6 +18,7 @@ const steps = ["Onboarding", "Data Source", "Generated Forecast", "Dashboard"];
 
 const DataSourceScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { logout, user } = useAuth0();
   const { forecastType, uploadedFiles, removeUploadedFile, isUploadSuccessful, setForecastResult } = useForecast();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -187,18 +189,36 @@ const DataSourceScreen: React.FC = () => {
     <div className="container max-w-5xl px-4 py-12 mx-auto">
       <ProgressIndicator steps={steps} currentStep={1} />
       
-      <motion.div 
-        className="mb-8 text-center"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Connect Your Data</h1>
-        <p className="text-lg text-gray-600">Upload your ZIP file containing sales and inventory data.</p>
-        {forecastType && (
-          <p className="mt-2 text-sm font-medium text-primary">Selected forecast type: {forecastType}</p>
-        )}
-      </motion.div>
+      <div className="flex items-center justify-between mb-8">
+        <motion.div 
+          className="text-center flex-1"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Connect Your Data</h1>
+          <p className="text-lg text-gray-600">Upload your ZIP file containing sales and inventory data.</p>
+          {forecastType && (
+            <p className="mt-2 text-sm font-medium text-primary">Selected forecast type: {forecastType}</p>
+          )}
+        </motion.div>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-600">Welcome, {user?.name}</span>
+          <Button 
+            onClick={() => logout({
+              logoutParams: {
+                returnTo: window.location.origin
+              }
+            })}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <LogOut size={16} />
+            Logout
+          </Button>
+        </div>
+      </div>
       
       <motion.div 
         className="grid grid-cols-1 gap-6 mb-12"

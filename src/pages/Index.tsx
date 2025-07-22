@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LineChart, ShoppingCart, Briefcase, TrendingUp, ArrowRight, LogIn } from 'lucide-react';
+import { LineChart, ShoppingCart, Briefcase, TrendingUp, ArrowRight, LogIn, LogOut } from 'lucide-react';
+import { useAuth0 } from '@auth0/auth0-react';
 import GlassMorphCard from '@/components/ui/GlassMorphCard';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { useForecast } from '@/context/ForecastContext';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { logout, user } = useAuth0();
   const { setForecastType } = useForecast();
   const [businessType, setBusinessType] = useState('');
   const [salesChannels, setSalesChannels] = useState({ online: '', offline: '' });
@@ -36,6 +38,14 @@ const Index = () => {
     navigate('/data-source');
   };
 
+  const handleLogout = () => {
+    logout({
+      logoutParams: {
+        returnTo: window.location.origin
+      }
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
       <div className="container max-w-5xl mx-auto py-8">
@@ -51,7 +61,18 @@ const Index = () => {
               <h1 className="text-3xl font-bold tracking-tight mb-2">FeatureBox AI</h1>
             </div>
             <div className="flex-1 flex justify-end">
-              {/* This div is kept to balance the layout and center the title */}
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">Welcome, {user?.name}</span>
+                <Button 
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </Button>
+              </div>
             </div>
           </div>
           <p className="text-lg text-gray-600">Welcome to your intelligent demand forecasting assistant</p>

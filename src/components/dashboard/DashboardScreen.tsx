@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
 import { 
   ArrowLeft, 
   Download, 
@@ -36,6 +37,7 @@ import OrderOptimizationPanel from './OrderOptimizationPanel';
 
 const DashboardScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth0();
   const [activeTab, setActiveTab] = useState('forecast');
   
   const handleExportData = () => {
@@ -82,12 +84,11 @@ const DashboardScreen: React.FC = () => {
           </Button>
           <Button 
             variant="outline"
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("tenant");
-              localStorage.removeItem("backend_url");
-              window.location.href = "/";
-            }}
+            onClick={() => logout({
+              logoutParams: {
+                returnTo: window.location.origin
+              }
+            })}
             className="flex items-center gap-2"
           >
             <LogOut size={16} />
