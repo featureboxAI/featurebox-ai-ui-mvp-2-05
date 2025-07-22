@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LineChart, ShoppingCart, Briefcase, PlusCircle, ArrowRight, LogIn } from 'lucide-react';
+import { LineChart, ShoppingCart, Briefcase, TrendingUp, ArrowRight, LogIn } from 'lucide-react';
 import GlassMorphCard from '@/components/ui/GlassMorphCard';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
 import { Button } from '@/components/ui/button';
@@ -99,16 +99,16 @@ const Index = () => {
 
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
-              className="h-full opacity-50 cursor-not-allowed"
-              onClick={() => handleCardClick('/data-source', false)}
+              className="h-full"
+              onClick={() => window.open('https://trends-dashboard-frontend-766707302238.europe-west1.run.app/', '_blank')}
             >
               <div className="flex flex-col items-center text-center h-full">
                 <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4">
-                  <PlusCircle size={28} />
+                  <TrendingUp size={28} />
                 </div>
-                <h3 className="text-xl font-medium mb-3 text-gray-500">New Product Introduction</h3>
-                <p className="text-gray-400">
-                  Estimate the quantity of product without historical data.
+                <h3 className="text-xl font-medium mb-3">Market Trends</h3>
+                <p className="text-gray-600">
+                  Analyze market trends and insights.
                 </p>
               </div>
             </GlassMorphCard>
