@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LineChart, Briefcase, PlusCircle } from 'lucide-react';
+import { LineChart, Briefcase, TrendingUp } from 'lucide-react';
 import AnimatedCard from '../ui/AnimatedCard';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
@@ -23,10 +23,10 @@ const tasks = [
     color: 'bg-blue-50 text-blue-500',
   },
   {
-    id: 'new-product',
-    title: 'New Product Introduction',
-    description: 'Estimate the quantity of product without historical data.',
-    icon: <PlusCircle className="w-6 h-6" />,
+    id: 'market-trends',
+    title: 'Market Trends',
+    description: 'Analyze market trends and insights.',
+    icon: <TrendingUp className="w-6 h-6" />,
     color: 'bg-purple-50 text-purple-500',
   },
 ];
@@ -45,6 +45,10 @@ const OnboardingScreen: React.FC = () => {
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
 
   const handleTaskSelect = (taskId: string) => {
+    if (taskId === 'market-trends') {
+      window.open('https://trends-dashboard-frontend-766707302238.europe-west1.run.app/', '_blank');
+      return;
+    }
     setSelectedTask(taskId);
   };
 
