@@ -1,23 +1,25 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-interface ForecastResult {
-  model_selected: string;
+export interface ForecastResult {
+  filename: string;
   downloadableFile?: Blob;
-  filename?: string;
-  sarima?: {
-    forecast: number[];
-    lower_bound: number[];
-    upper_bound: number[];
-    dates: string[];
-    method: string;
-  };
-  moving_average?: {
-    forecast: number[];
-    dates: string[];
-    method: string;
-  };
+  download_url?: string;  
 }
+  
+//   sarima?: {
+//     forecast: number[];
+//     lower_bound: number[];
+//     upper_bound: number[];
+//     dates: string[];
+//     method: string;
+//   };
+//   moving_average?: {
+//     forecast: number[];
+//     dates: string[];
+//     method: string;
+//   };
+// }
 
 interface ForecastContextType {
   forecastType: string;
@@ -74,7 +76,8 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
       isUploadSuccessful,
       setIsUploadSuccessful,
       forecastResult,
-      setForecastResult
+      setForecastResult 
+      
     }}>
       {children}
     </ForecastContext.Provider>

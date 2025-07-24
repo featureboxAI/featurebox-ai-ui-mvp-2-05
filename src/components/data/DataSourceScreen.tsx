@@ -89,45 +89,74 @@ const DataSourceScreen: React.FC = () => {
         body: formData,
       });
       
-      console.log('API Response status:', response.status);
+      console.log('API  status:', response.status);
       console.log('API Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.ok) {
-        console.log('Files successfully uploaded to API');
-        
-        // Check if the response is a downloadable file
-        const contentType = response.headers.get('content-type');
-        console.log('Content-Type:', contentType);
-        
-        // The response should be a downloadable file, so we'll store it for later use
-        const blob = await response.blob();
-        const filename = response.headers.get('content-disposition')?.match(/filename="([^"]+)"/)?.[1] || 'forecast_results.xlsx';
-        
-        console.log('File downloaded successfully:', filename, 'Size:', blob.size);
-        
-        // Store the forecast result
-        setForecastResult({
-          model_selected: 'SARIMA',
-          downloadableFile: blob,
-          filename: filename
-        });
-        
-        setIsUploading(false);
-        setUploadError(null);
-        
-        toast({
-          title: "Upload successful",
-          description: "Your forecast has been generated successfully.",
-        });
-        
-        navigate('/forecast-setup');
+        const result: {
+          message: string;
+          forecast_shape?: number[];
+          metrics_shape?: number[];
+          download_url?: string;
+        } = await response.json();
+  
+        console.log(' Forecast result received:', result);
+  
+        const filename = 'forecast_results.xlsx'; // or extract from URL if needed
+  
+        if (result.download_url) {
+          setForecastResult({
+            filename,
+            download_url: result.download_url,
+          });
+
+          setIsUploading(false);
+          setUploadError(null);
+
+          toast({
+            title: "Upload successful",
+            description: "Your forecast has been generated successfully.",
+          });
+
+          navigate('/forecast-setup');
+        } else {
+          console.error(" No download URL in response");
+          toast({
+            title: "Missing download link",
+            description: "Server did not return a download URL. Try again later.",
+            variant: "destructive",
+          });
+        }
       } else {
         const errorText = await response.text();
         console.error('API Error Response:', response.status, errorText);
         throw new Error(`API responded with status: ${response.status} - ${errorText}`);
       }
-    } catch (error) {
-      console.error('Error uploading files:', error);
+    } catch (error: any) {
+      console.error('❌ Upload failed:', error);
+  
+      let errorMessage = "Failed to upload files to the server.";
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        errorMessage = "Network error: Unable to connect to the forecast service.";
+      }
+  
+      toast({
+        title: "Upload failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+  
+      setUploadError(errorMessage);
+    } finally {
+      // ✅ Always stop the loader
+      setIsUploading(false);
+    }
+  };
+  
+
+    
+       
+        
       
       // Commented out retry mechanism as requested
       // if (retryCount < MAX_RETRIES) {
@@ -146,25 +175,7 @@ const DataSourceScreen: React.FC = () => {
       //     handleUploadToAPI();
       //   }, 1000 * Math.pow(2, nextRetryCount));
       // } else {
-        setIsUploading(false);
         
-        // Provide more specific error messages
-        let errorMessage = "Failed to upload files to the server.";
-        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-          errorMessage = "Network error: Unable to connect to the forecast service. Please check your internet connection and try again.";
-        }
-        
-        setUploadError(errorMessage);
-        
-        toast({
-          title: "Upload failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      // }
-    }
-  };
-  
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
