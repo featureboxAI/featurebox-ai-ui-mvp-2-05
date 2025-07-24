@@ -77,7 +77,13 @@ const DataSourceScreen: React.FC = () => {
       
       // Add the first ZIP file to the FormData
       if (uploadedFiles.length > 0) {
-        formData.append('file', uploadedFiles[0], uploadedFiles[0].name);
+        const file = uploadedFiles[0];
+        if (!(file instanceof File)) {
+          throw new Error(" uploadedFiles[0] is not a File object!");
+        }
+      formData.append('file', file, file.name);
+
+        // formData.append('file', uploadedFiles[0], uploadedFiles[0].name);
       }
       
       console.log('Uploading files to API...');
