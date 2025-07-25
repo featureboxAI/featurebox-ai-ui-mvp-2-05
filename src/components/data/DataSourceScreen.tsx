@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
-import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Download, Check, X, File, AlertCircle, Loader, LogOut } from 'lucide-react';
+import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Download, Check, X, AlertCircle, Loader, LogOut } from 'lucide-react';
+import { File as FileIcon } from 'lucide-react';
+
 import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
@@ -14,6 +16,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+
+console.log("Is global File available?", typeof window.File);  // should be "function"
+console.log("Is local File?", typeof File);                   // should also be "function", if shadowed
+
+
 const steps = ["Onboarding", "Data Source", "Generated Forecast", "Dashboard"];
 
 const DataSourceScreen: React.FC = () => {
@@ -23,6 +30,7 @@ const DataSourceScreen: React.FC = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  
   
   useEffect(() => {
     // Log the forecast type coming from the context
@@ -70,94 +78,84 @@ const DataSourceScreen: React.FC = () => {
   
   const handleUploadToAPI = async () => {
     setIsUploading(true);
-    
+  
     try {
-      // Create a FormData object to send files
       const formData = new FormData();
-      
-      // Add the first ZIP file to the FormData
+  
       if (uploadedFiles.length > 0) {
         const file = uploadedFiles[0];
-        if (!(file instanceof File)) {
-          throw new Error(" uploadedFiles[0] is not a File object!");
-        }
-      formData.append('file', file, file.name);
+        
+        console.log("Debug upload file:", file);
+        console.log("Is real File:", file instanceof window.File);
 
-        // formData.append('file', uploadedFiles[0], uploadedFiles[0].name);
+  
+        // ✅ Ensure it's a valid File object
+        // if (!(file instanceof Blob)) {
+          if (!(file instanceof window.File)) {
+            throw new Error(" Uploaded file is not a valid File object");
+          }
+          
+      
+          console.log("Debug - File object type check:");
+          console.log("file:", file);
+          console.log("Is instanceof window.File:", file instanceof window.File);
+          console.log("file.name:", file.name);
+          console.log("file.type:", file.type);
+
+          formData.append("file", file);
+          
+      } else {
+        throw new Error("No file selected.");
       }
-      
-      console.log('Uploading files to API...');
-      console.log('Files to upload:', uploadedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`));
-      
-      // Make the API call without CORS restrictions
+  
+      console.log("Uploading files to API...");
+      console.log("Files to upload:", uploadedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`));
+  
       const response = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/upload/`, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
-      
-      console.log('API  status:', response.status);
-      console.log('API Response headers:', Object.fromEntries(response.headers.entries()));
-      
+  
+      console.log("API status:", response.status);
+      console.log("API Response headers:", Object.fromEntries(response.headers.entries()));
+  
       if (response.ok) {
-        const result: {
-          message: string;
-          forecast_shape?: number[];
-          metrics_shape?: number[];
-          download_url?: string;
-        } = await response.json();
-  
-        console.log(' Forecast result received:', result);
-  
-        const filename = 'forecast_results.xlsx'; // or extract from URL if needed
+        const result = await response.json();
+        console.log("✅ Forecast result received:", result);
   
         if (result.download_url) {
           setForecastResult({
-            filename,
+            filename: "forecast_results.xlsx",
             download_url: result.download_url,
           });
-
-          setIsUploading(false);
-          setUploadError(null);
-
+  
           toast({
             title: "Upload successful",
             description: "Your forecast has been generated successfully.",
           });
-
-          navigate('/forecast-setup');
+  
+          setUploadError(null);
+          navigate("/forecast-setup");
         } else {
-          console.error(" No download URL in response");
-          toast({
-            title: "Missing download link",
-            description: "Server did not return a download URL. Try again later.",
-            variant: "destructive",
-          });
+          throw new Error("❌ No download_url returned from server.");
         }
       } else {
         const errorText = await response.text();
-        console.error('API Error Response:', response.status, errorText);
         throw new Error(`API responded with status: ${response.status} - ${errorText}`);
       }
     } catch (error: any) {
-      console.error('❌ Upload failed:', error);
-  
-      let errorMessage = "Failed to upload files to the server.";
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        errorMessage = "Network error: Unable to connect to the forecast service.";
-      }
-  
+      console.error("❌ Upload failed:", error);
       toast({
         title: "Upload failed",
-        description: errorMessage,
+        description: error.message || "Unknown error",
         variant: "destructive",
       });
-  
-      setUploadError(errorMessage);
+      setUploadError(error.message);
     } finally {
-      // ✅ Always stop the loader
       setIsUploading(false);
     }
   };
+  
   
 
     
