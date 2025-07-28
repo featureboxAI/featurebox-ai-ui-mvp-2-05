@@ -31,8 +31,8 @@ const ForecastSetupScreen: React.FC = () => {
   };
 
   const handleExportToExcel = () => {
-    if (!forecastResult?.download_url) {
-      console.error(" Excel download failed: No download URL found in forecast result.");
+    if (!forecastResult?.downloadableFile) {
+      console.error(" Excel download failed: No file found in forecast result.");
       toast({
         title: "Download failed",
         description: "Failed to download forecast result. Please try again.",
@@ -41,12 +41,14 @@ const ForecastSetupScreen: React.FC = () => {
       return;
     }
   
+    const url = window.URL.createObjectURL(forecastResult.downloadableFile);  
     const link = document.createElement('a');
-    link.href = forecastResult.download_url;
+    link.href = url;
     link.download = forecastResult.filename || 'forecast_results.xlsx';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
   };
     
   return (
@@ -99,7 +101,7 @@ const ForecastSetupScreen: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             className="btn-primary flex items-center mx-auto text-lg px-8 py-4"
             onClick={handleExportToExcel}
-            disabled={!forecastResult?.download_url} // ✅ only allow if path available
+            disabled={!forecastResult?.downloadableFile} // ✅ only allow if downloadable file is available
           >
             <Download size={24} className="mr-3" />
             Download Forecast Results

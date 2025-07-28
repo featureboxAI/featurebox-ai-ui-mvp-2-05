@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Download, Check, X, AlertCircle, Loader, LogOut } from 'lucide-react';
 import { File as FileIcon } from 'lucide-react';
-
 import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
@@ -76,40 +75,42 @@ const DataSourceScreen: React.FC = () => {
     handleUploadToAPI();
   };
   
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
+  
   const handleUploadToAPI = async () => {
     setIsUploading(true);
   
     try {
-      const formData = new FormData();
-  
+      let formData; 
       if (uploadedFiles.length > 0) {
         const file = uploadedFiles[0];
         
         console.log("Debug upload file:", file);
         console.log("Is real File:", file instanceof window.File);
 
-  
         // ✅ Ensure it's a valid File object
-        // if (!(file instanceof Blob)) {
-          if (!(file instanceof window.File)) {
-            throw new Error(" Uploaded file is not a valid File object");
-          }
+        if (!(file instanceof window.File)) {
+          throw new Error("Uploaded file is not a valid File object");
+        }
           
+        formData = new FormData();
+        formData.append("file", file);
       
-          console.log("Debug - File object type check:");
-          console.log("file:", file);
-          console.log("Is instanceof window.File:", file instanceof window.File);
-          console.log("file.name:", file.name);
-          console.log("file.type:", file.type);
-
-          formData.append("file", file);
+        console.log("Debug - File object type check:");
+        console.log("file:", file);
+        console.log("Is instanceof window.File:", file instanceof window.File);
+        console.log("file.name:", file.name);
+        console.log("file.type:", file.type);  
           
       } else {
         throw new Error("No file selected.");
       }
   
       console.log("Uploading files to API...");
-      console.log("Files to upload:", uploadedFiles.map(f => `${f.name} (${formatFileSize(f.size)})`));
   
       const response = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/upload/`, {
         method: "POST",
@@ -119,72 +120,55 @@ const DataSourceScreen: React.FC = () => {
       console.log("API status:", response.status);
       console.log("API Response headers:", Object.fromEntries(response.headers.entries()));
   
-      if (response.ok) {
+      // —— NEW: inspect Content-Type to choose JSON vs. file handling ——
+      const contentType = response.headers.get("Content-Type") || "";
+
+      if (contentType.includes("application/json")) {
+        // — MODIFIED: only JSON path now handles status/errors
         const result = await response.json();
-        console.log("✅ Forecast result received:", result);
-  
-        if (result.download_url) {
-          setForecastResult({
-            filename: "forecast_results.xlsx",
-            download_url: result.download_url,
-          });
-  
-          toast({
-            title: "Upload successful",
-            description: "Your forecast has been generated successfully.",
-          });
-  
-          setUploadError(null);
-          navigate("/forecast-setup");
+        console.log("JSON:", result);
+
+        if (result.message) {
+          toast({ title: "Server says:", description: result.message });
         } else {
-          throw new Error("❌ No download_url returned from server.");
+          throw new Error("Unexpected JSON structure");
         }
-      } else {
-        const errorText = await response.text();
-        throw new Error(`API responded with status: ${response.status} - ${errorText}`);
+
+        // — NEW: don't fall through to download or any other UI change
+        return;
+
+      } else if (
+        contentType.includes(
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+      ) {
+        // ✅ Excel download handling
+        const blob = await response.blob();
+        const disp = response.headers.get("Content-Disposition");
+  
+        let filename = "forecast_results.xlsx";
+        if (disp && disp.includes("filename=")) {
+          const match = /filename="?(.+?)"?($|;)/.exec(disp);
+          if (match) filename = match[1];
+        }
+  
+        // Save result in context
+        setForecastResult({
+          filename,
+          downloadableFile: blob,
+        });
+        
+        // Navigate to forecast setup screen to show download options
+        navigate('/forecast-setup');
       }
-    } catch (error: any) {
-      console.error("❌ Upload failed:", error);
-      toast({
-        title: "Upload failed",
-        description: error.message || "Unknown error",
-        variant: "destructive",
-      });
-      setUploadError(error.message);
+  
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({ title: "Upload Failed", description: error.message || "Unknown error" });
     } finally {
       setIsUploading(false);
     }
-  };
-  
-  
-
-    
-       
-        
-      
-      // Commented out retry mechanism as requested
-      // if (retryCount < MAX_RETRIES) {
-      //   const nextRetryCount = retryCount + 1;
-      //   setRetryCount(nextRetryCount);
-      //   setIsRetrying(true);
-      //   
-      //   toast({
-      //     title: `Upload failed (Attempt ${nextRetryCount}/${MAX_RETRIES})`,
-      //     description: "Retrying upload...",
-      //     variant: "destructive",
-      //   });
-      //   
-      //   setTimeout(() => {
-      //     setIsRetrying(false); 
-      //     handleUploadToAPI();
-      //   }, 1000 * Math.pow(2, nextRetryCount));
-      // } else {
-        
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-  };
+  };  
   
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
@@ -192,7 +176,7 @@ const DataSourceScreen: React.FC = () => {
     if (extension === 'zip') {
       return <FileArchive size={24} className="text-blue-600" />;
     } else {
-      return <File size={24} className="text-gray-600" />;
+      return <FileIcon size={24} className="text-gray-600" />;
     }
   };
 
