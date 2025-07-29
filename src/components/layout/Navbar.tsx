@@ -39,13 +39,17 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
           )}
           <Link to="/" className="flex items-center space-x-2">
             <motion.div 
-              className="h-8 w-8 rounded-full bg-primary flex items-center justify-center"
+              className="h-8 w-8 flex items-center justify-center"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <span className="text-white font-bold">DF</span>
+              <img 
+                src="/FeatureBox_Logo.png" 
+                alt="FeatureBox AI" 
+                className="h-8 w-8 object-contain"
+              />
             </motion.div>
-            <span className="font-semibold text-lg">DemandForecaster</span>
+            <span className="font-semibold text-lg">FeatureBox AI</span>
           </Link>
         </div>
         <div className="flex-1" />

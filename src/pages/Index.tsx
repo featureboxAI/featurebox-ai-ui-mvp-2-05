@@ -58,7 +58,14 @@ const Index = () => {
           <div className="flex justify-between items-center mb-4">
             <div className="flex-1"></div>
             <div className="flex-1 text-center">
-              <h1 className="text-3xl font-bold tracking-tight mb-2">FeatureBox AI</h1>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <img 
+                  src="/FeatureBox_Logo.png" 
+                  alt="FeatureBox AI" 
+                  className="h-10 w-10 object-contain"
+                />
+                <h1 className="text-3xl font-bold tracking-tight">FeatureBox AI</h1>
+              </div>
             </div>
             <div className="flex-1 flex justify-end">
               <div className="flex items-center gap-4">

@@ -52,6 +52,13 @@ const Login: React.FC = () => {
       >
         <Card className="backdrop-blur-sm bg-white/80 border-white/20 shadow-xl">
           <CardHeader className="space-y-1">
+            <div className="flex justify-center mb-4">
+              <img 
+                src="/FeatureBox_Logo.png" 
+                alt="FeatureBox AI" 
+                className="h-12 w-12 object-contain"
+              />
+            </div>
             <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
             <CardDescription className="text-center">
               Sign in to your FeatureBox AI account

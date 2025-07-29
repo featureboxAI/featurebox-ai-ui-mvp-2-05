@@ -81,7 +81,14 @@ const OnboardingScreen: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-bold tracking-tight mb-2">Welcome to FeatureBox AI</h1>
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <img 
+            src="/FeatureBox_Logo.png" 
+            alt="FeatureBox AI" 
+            className="h-12 w-12 object-contain"
+          />
+          <h1 className="text-4xl font-bold tracking-tight">Welcome to FeatureBox AI</h1>
+        </div>
         <p className="text-lg text-gray-600">Get started by selecting your primary activity and telling us about your business.</p>
       </motion.div>
 
