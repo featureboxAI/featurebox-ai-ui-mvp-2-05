@@ -121,7 +121,7 @@ const Index = () => {
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
               className="h-full"
-              onClick={() => window.open('https://trends-dashboard-frontend-766707302238.europe-west1.run.app/', '_blank')}
+              onClick={() => navigate('/market-trends')}
             >
               <div className="flex flex-col items-center text-center h-full">
                 <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4">

@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import DataSourceScreen from "./components/data/DataSourceScreen";
 import ForecastSetupScreen from "./components/forecast/ForecastSetupScreen";
 import Dashboard from "./pages/Dashboard";
+import MarketTrendsScreen from "./components/market-trends/MarketTrendsScreen";
 import { ForecastProvider } from "./context/ForecastContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -42,6 +43,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/market-trends" element={
+              <ProtectedRoute>
+                <MarketTrendsScreen />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
