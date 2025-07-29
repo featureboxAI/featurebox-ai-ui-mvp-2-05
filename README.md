@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/3575558a-8f32-40c6-9578-00262ca8bef7
+**URL**: (https://featurebox-ai-ui-mvp-2-05.lovable.app)
 
 ## How can I edit this code?
 
