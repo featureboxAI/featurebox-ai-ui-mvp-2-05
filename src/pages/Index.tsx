@@ -58,7 +58,14 @@ const Index = () => {
           <div className="flex justify-between items-center mb-4">
             <div className="flex-1"></div>
             <div className="flex-1 text-center">
-              <h1 className="text-3xl font-bold tracking-tight mb-2">FeatureBox AI</h1>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <img 
+                  src="/FeatureBox_Logo.png" 
+                  alt="FeatureBox AI" 
+                  className="h-10 w-10 object-contain"
+                />
+                <h1 className="text-3xl font-bold tracking-tight">FeatureBox AI</h1>
+              </div>
             </div>
             <div className="flex-1 flex justify-end">
               <div className="flex items-center gap-4">
@@ -121,7 +128,7 @@ const Index = () => {
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
               className="h-full"
-              onClick={() => window.open('https://trends-dashboard-frontend-766707302238.europe-west1.run.app/', '_blank')}
+              onClick={() => navigate('/market-trends')}
             >
               <div className="flex flex-col items-center text-center h-full">
                 <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4">

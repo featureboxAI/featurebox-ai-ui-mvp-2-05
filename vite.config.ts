@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/api/trends': {
+        target: 'https://trends-dashboard-backend-766707302238.europe-west1.run.app',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/trends/, ''),
+        secure: true,
+      }
+    }
   },
   plugins: [
     react(),

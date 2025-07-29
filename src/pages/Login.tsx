@@ -19,13 +19,14 @@ const Login: React.FC = () => {
     loginWithRedirect();
   };
 
-  const handleSignUp = () => {
-    loginWithRedirect({
-      authorizationParams: {
-        screen_hint: 'signup'
-      }
-    });
-  };
+  // Temporarily disabled - will be re-enabled when manual user creation is complete
+  // const handleSignUp = () => {
+  //   loginWithRedirect({
+  //     authorizationParams: {
+  //       screen_hint: 'signup'
+  //     }
+  //   });
+  // };
 
   if (isLoading) {
     return (
@@ -51,6 +52,13 @@ const Login: React.FC = () => {
       >
         <Card className="backdrop-blur-sm bg-white/80 border-white/20 shadow-xl">
           <CardHeader className="space-y-1">
+            <div className="flex justify-center mb-4">
+              <img 
+                src="/FeatureBox_Logo.png" 
+                alt="FeatureBox AI" 
+                className="h-12 w-12 object-contain"
+              />
+            </div>
             <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
             <CardDescription className="text-center">
               Sign in to your FeatureBox AI account
@@ -61,9 +69,10 @@ const Login: React.FC = () => {
               <Button onClick={handleLogin} className="w-full">
                 Sign In
               </Button>
-              <Button onClick={handleSignUp} variant="outline" className="w-full">
+              {/* Temporarily disabled - will be re-enabled when manual user creation is complete */}
+              {/* <Button onClick={handleSignUp} variant="outline" className="w-full">
                 Sign Up
-              </Button>
+              </Button> */}
             </div>
           </CardContent>
         </Card>
