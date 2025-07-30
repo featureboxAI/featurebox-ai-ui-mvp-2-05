@@ -124,28 +124,37 @@ const DataSourceScreen: React.FC = () => {
     }
   };  
 
-  // ✅ Polling logic with debug logs
+  // Polling logic with debug logs
   const startPolling = () => {
-    console.log("🚀 [Polling] Starting polling to /status");
+    console.log(" [Polling] Starting polling to /status");
     pollingIntervalRef.current = setInterval(async () => {
-      console.log("🔄 [Polling] Tick - calling /status");
+      console.log(" [Polling] Tick - calling /status");
       try {
         const res = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/status`);
-        console.log("🌐 [Polling] Response status:", res.status);
+        console.log(" [Polling] Response status:", res.status);
         const statusData = await res.json();
-        console.log("📡 [Polling] Response JSON:", statusData);
+        console.log(" [Polling] Response JSON:", statusData);
 
         setPollingStatus(statusData.status);
 
         if (statusData.status === "completed") {
-          console.log("✅ [Polling] Completed - stopping polling");
+          console.log(" [Polling] Completed - stopping polling");
           clearInterval(pollingIntervalRef.current!);
           pollingIntervalRef.current = null;
+
+          // Extract filename from GCS path and set in context
+          const gcsPath = statusData.forecast_gcs || '';
+          const filename = gcsPath.split('/').pop() || 'forecast_results.xlsx';
+          setForecastResult({
+            filename,
+            downloadableFile: null // file will be downloaded via /download-forecast
+          });
+
           toast({ title: "Forecast Complete", description: "Redirecting to results..." });
           navigate('/forecast-setup');
         }
       } catch (err) {
-        console.error("❌ [Polling] Error:", err);
+        console.error(" [Polling] Error:", err);
       }
     }, 5000);
   };

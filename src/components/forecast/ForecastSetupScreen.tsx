@@ -55,28 +55,6 @@ const ForecastSetupScreen: React.FC = () => {
       });
     }
   };
-  
-
-  // const handleExportToExcel = async () => {
-  //   if (!forecastResult?.downloadableFile) {
-  //     console.error(" Excel download failed: No file found in forecast result.");
-  //     toast({
-  //       title: "Download failed",
-  //       description: "Failed to download forecast result. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
-  
-  //   const url = window.URL.createObjectURL(forecastResult.downloadableFile);  
-  //   const link = document.createElement('a');
-  //   link.href = url;
-  //   link.download = forecastResult.filename || 'forecast_results.xlsx';
-  //   document.body.appendChild(link);
-  //   link.click();
-  //   document.body.removeChild(link);
-    
-  // };
     
   return (
     <motion.div 
