@@ -9,7 +9,7 @@ import { useForecast } from '@/context/ForecastContext';
 
 const steps = ["Onboarding", "Data Source", "Model Selection", "Generated Forecast", "Dashboard"];
 
-const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const POLLING_INTERVAL =  10 * 1000; // 10 seconds
 
 const ModelSelectionScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -46,6 +46,7 @@ const ModelSelectionScreen: React.FC = () => {
   // NEW: Polling /status every 5 min
   // =============================
   useEffect(() => {
+    console.log("[DEBUG] Polling effect started");
     let pollInterval: ReturnType<typeof setInterval>;
 
     const checkStatus = async () => {
