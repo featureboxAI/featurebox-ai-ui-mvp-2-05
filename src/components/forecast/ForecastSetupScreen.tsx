@@ -40,7 +40,7 @@ const ForecastSetupScreen: React.FC = () => {
   
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'forecast_results.xlsx'; // default filename
+      link.download = forecastResult?.filename ||'forecast_results.xlsx'; // default filename
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -106,7 +106,7 @@ const ForecastSetupScreen: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             className="btn-primary flex items-center mx-auto text-lg px-8 py-4"
             onClick={handleExportToExcel}
-            disabled={!forecastResult?.downloadableFile} 
+            disabled={!forecastResult?.filename} 
           >
             <Download size={24} className="mr-3" />
             Download Forecast Results

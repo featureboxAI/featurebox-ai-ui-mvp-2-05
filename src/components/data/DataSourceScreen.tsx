@@ -286,7 +286,8 @@ const DataSourceScreen: React.FC = () => {
           whileTap={{ scale: 0.98 }}
           className={`btn-primary ${(isUploading || pollingStatus === 'running') ? 'opacity-70 cursor-not-allowed' : ''}`}
           onClick={handleGenerateForecast}
-          disabled={isUploading || pollingStatus === 'running'}
+          disabled={isUploading || pollingStatus.toLowerCase().includes('running') ||
+            pollingStatus.toLowerCase().includes('forecast started')}
           >
             {(isUploading || pollingStatus === 'running') ? 'Generating...' : 'Generate Forecast'}
             </motion.button>
