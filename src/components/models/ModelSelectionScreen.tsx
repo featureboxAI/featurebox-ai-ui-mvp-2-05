@@ -102,7 +102,24 @@ const ModelSelectionScreen: React.FC = () => {
     setIsDownloadReady(false);
     setStatusMessage("Forecast started...");
     // Polling will handle completion
-  };
+
+  // Immediate status check after forecast starts
+  fetch("https://featurebox-ai-backend-service-666676702816.us-west1.run.app/status")
+    .then(r => r.json())
+    .then(data => {
+      console.log("[DEBUG] Immediate status after start:", data);
+      if (data.status === "completed") {
+        setIsGenerating(false);
+        setIsDownloadReady(true);
+        setStatusMessage("Forecast completed! Ready to download.");
+      } else if (data.status === "running" || data.status === "started") {
+        setIsGenerating(true);
+        setIsDownloadReady(false);
+        setStatusMessage("Forecast is running...");
+      }
+    })
+    .catch(err => console.error("[ERROR] Immediate status check failed:", err));
+};
 
   // =============================
   // NEW: Function to call /download-forecast
