@@ -20,6 +20,7 @@ const ModelSelectionScreen: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloadReady, setIsDownloadReady] = useState(false); 
 
   useEffect(() => {
     // Log the forecast type from context
@@ -65,8 +66,13 @@ const ModelSelectionScreen: React.FC = () => {
           clearInterval(pollInterval);
           setIsGenerating(false);
           setStatusMessage("Error in forecast. Please try again.");
+          setIsDownloadReady(false);
+        } else if (data.status === "running") {
+          setStatusMessage("Forecast is running..."); // Clean message
+        } else if (data.status === "started") {
+          setStatusMessage("Forecast is started"); // Clean message
         } else {
-          setStatusMessage(`Forecast status: ${data.status}`);
+          setStatusMessage(`Status: ${data.status}`); // Fallback clean message
         }
       } catch (err) {
         console.error("[ERROR] Polling failed:", err);
@@ -95,6 +101,33 @@ const ModelSelectionScreen: React.FC = () => {
     setStatusMessage("Forecast started...");
     // Polling will handle completion
   };
+
+  // =============================
+  // NEW: Function to call /download-forecast
+  // =============================
+  const downloadForecast = async () => {
+    try {
+      const res = await fetch(
+        "https://featurebox-ai-backend-service-666676702816.us-west1.run.app/download-forecast"
+      );
+      if (!res.ok) throw new Error("Download failed");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "forecast_results.xlsx"; // Default filename
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("[ERROR] Failed to download forecast:", err);
+    }
+  };
+
 
   return (
     <div className="container max-w-5xl px-4 py-12 mx-auto">
@@ -139,8 +172,21 @@ const ModelSelectionScreen: React.FC = () => {
           disabled={isGenerating} // NEW: Disable click
           onClick={handleContinue}
         >
-          {isGenerating ? "Running..." : "Generate Forecast"} // NEW: Text change
+          {isGenerating ? "Running..." : "Generate Forecast"} 
         </motion.button>
+
+        # Download button shown only when ready
+        {isDownloadReady && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="btn-secondary ml-4"
+            onClick={downloadForecast}
+          >
+            Download Forecast
+          </motion.button>
+        )}
+
       </div>
     </div>
   );
