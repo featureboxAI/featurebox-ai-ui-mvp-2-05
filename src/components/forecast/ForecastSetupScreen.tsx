@@ -30,26 +30,53 @@ const ForecastSetupScreen: React.FC = () => {
     navigate('/dashboard');
   };
 
-  const handleExportToExcel = () => {
-    if (!forecastResult?.downloadableFile) {
-      console.error(" Excel download failed: No file found in forecast result.");
+  const handleExportToExcel = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/download-forecast`);
+      if (!response.ok) throw new Error("Download failed");
+  
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+  
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'forecast_results.xlsx'; // default filename
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  
+      console.log(" Forecast downloaded successfully");
+    } catch (err) {
+      console.error(" Download failed:", err);
       toast({
         title: "Download failed",
-        description: "Failed to download forecast result. Please try again.",
+        description: "Could not download forecast result. Please try again.",
         variant: "destructive",
       });
-      return;
     }
-  
-    const url = window.URL.createObjectURL(forecastResult.downloadableFile);  
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = forecastResult.filename || 'forecast_results.xlsx';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
   };
+  
+
+  // const handleExportToExcel = async () => {
+  //   if (!forecastResult?.downloadableFile) {
+  //     console.error(" Excel download failed: No file found in forecast result.");
+  //     toast({
+  //       title: "Download failed",
+  //       description: "Failed to download forecast result. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
+  
+  //   const url = window.URL.createObjectURL(forecastResult.downloadableFile);  
+  //   const link = document.createElement('a');
+  //   link.href = url;
+  //   link.download = forecastResult.filename || 'forecast_results.xlsx';
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+    
+  // };
     
   return (
     <motion.div 
@@ -101,7 +128,7 @@ const ForecastSetupScreen: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             className="btn-primary flex items-center mx-auto text-lg px-8 py-4"
             onClick={handleExportToExcel}
-            disabled={!forecastResult?.downloadableFile} // ✅ only allow if downloadable file is available
+            disabled={!forecastResult?.downloadableFile} 
           >
             <Download size={24} className="mr-3" />
             Download Forecast Results

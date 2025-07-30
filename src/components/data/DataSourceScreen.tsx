@@ -275,12 +275,12 @@ const DataSourceScreen: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className={`btn-primary ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className={`btn-primary ${(isUploading || pollingStatus === 'running') ? 'opacity-70 cursor-not-allowed' : ''}`}
           onClick={handleGenerateForecast}
-          disabled={isUploading}
-        >
-          {isUploading ? 'Generating...' : 'Generate Forecast'}
-        </motion.button>
+          disabled={isUploading || pollingStatus === 'running'}
+          >
+            {(isUploading || pollingStatus === 'running') ? 'Generating...' : 'Generate Forecast'}
+            </motion.button>
       </div>
       
       <FileUploadModal 
