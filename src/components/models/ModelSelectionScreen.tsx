@@ -85,7 +85,7 @@ const ModelSelectionScreen: React.FC = () => {
     checkStatus(); // Immediate check so we don’t wait 5 mins for first status
 
     return () => clearInterval(pollInterval); // Cleanup
-  }, [navigate]);
+  },[]); 
 
 
   const handleBack = () => {
