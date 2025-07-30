@@ -59,21 +59,22 @@ const ModelSelectionScreen: React.FC = () => {
 
         if (data.status === "completed") {
           clearInterval(pollInterval);
-          setIsGenerating(false); // Enable button again
-          setStatusMessage("Forecast completed!");
-          navigate("/results"); // Move to results screen
+          setIsGenerating(false);  // Enable Generate button
+          setIsDownloadReady(true);
+          setStatusMessage("Forecast completed! Ready to download.");
         } else if (data.status === "error") {
           clearInterval(pollInterval);
           setIsGenerating(false);
-          setStatusMessage("Error in forecast. Please try again.");
           setIsDownloadReady(false);
-        } else if (data.status === "running") {
-          setStatusMessage("Forecast is running..."); // Clean message
-        } else if (data.status === "started") {
-          setStatusMessage("Forecast is started"); // Clean message
+          setStatusMessage("Error in forecast. Please try again.");
+        } else if (data.status === "running" || data.status === "started") {
+          setIsGenerating(true);   //  Keeps button greyed out while running
+          setIsDownloadReady(false);
+          setStatusMessage("Forecast is running...");
         } else {
-          setStatusMessage(`Status: ${data.status}`); // Fallback clean message
+          setStatusMessage(`Forecast status: ${data.status}`);
         }
+        
       } catch (err) {
         console.error("[ERROR] Polling failed:", err);
       }
@@ -98,6 +99,7 @@ const ModelSelectionScreen: React.FC = () => {
   // Trigger forecast start + disable button
   const handleContinue = () => {
     setIsGenerating(true);
+    setIsDownloadReady(false);
     setStatusMessage("Forecast started...");
     // Polling will handle completion
   };
