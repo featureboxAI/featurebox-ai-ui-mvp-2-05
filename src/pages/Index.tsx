@@ -13,29 +13,53 @@ const Index = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth0();
   const { setForecastType } = useForecast();
-  const [businessType, setBusinessType] = useState('');
-  const [salesChannels, setSalesChannels] = useState({ online: '', offline: '' });
-  const [forecastingHorizon, setForecastingHorizon] = useState('');
   const [selectedGoal, setSelectedGoal] = useState('');
+  const [isDemandForecastingSelected, setIsDemandForecastingSelected] = useState(false);
+  
+  // New state for the updated inputs
+  const [lengthOfData, setLengthOfData] = useState('');
+  const [customLengthData, setCustomLengthData] = useState({ years: '', months: '' });
+  const [frequencyOfData, setFrequencyOfData] = useState('');
+  const [customFrequencyData, setCustomFrequencyData] = useState('');
+  const [forecastingHorizon, setForecastingHorizon] = useState('');
+  const [customForecastingHorizon, setCustomForecastingHorizon] = useState('');
+  const [forecastingFrequency, setForecastingFrequency] = useState('');
+  const [customForecastingFrequency, setCustomForecastingFrequency] = useState('');
 
   const handleCardClick = (path: string, isEnabled: boolean = true) => {
     if (isEnabled) {
-      navigate(path);
+      if (path === '/data-source') {
+        setIsDemandForecastingSelected(true);
+      } else {
+        navigate(path);
+      }
     }
   };
 
-  const handleGoalSelect = (goal: string) => {
-    setSelectedGoal(goal);
-    // Update the global context with the selected forecast type
-    setForecastType(goal);
-    console.log('Selected forecast type:', goal);
+  // Check if all inputs are filled
+  const isFormComplete = () => {
+    if (!isDemandForecastingSelected) return false;
+    
+    const lengthComplete = lengthOfData === 'year' || 
+      (lengthOfData === 'custom' && customLengthData.years && customLengthData.months);
+    
+    const frequencyComplete = ['weekly', 'biweekly', 'monthly', 'quarterly'].includes(frequencyOfData) ||
+      (frequencyOfData === 'custom' && customFrequencyData);
+    
+    const horizonComplete = ['30', '60', '90', '180'].includes(forecastingHorizon) ||
+      (forecastingHorizon === 'custom' && customForecastingHorizon);
+    
+    const forecastFrequencyComplete = ['weekly', 'biweekly', 'monthly', 'quarterly'].includes(forecastingFrequency) ||
+      (forecastingFrequency === 'custom' && customForecastingFrequency);
+    
+    return lengthComplete && frequencyComplete && horizonComplete && forecastFrequencyComplete;
   };
 
   const handleContinue = () => {
-    // Update the global context with the selected forecast type
-    setForecastType(selectedGoal);
-    console.log('Navigating to next screen with forecast type:', selectedGoal);
-    navigate('/data-source');
+    if (isFormComplete()) {
+      console.log('Navigating to next screen');
+      navigate('/data-source');
+    }
   };
 
   const handleLogout = () => {
@@ -93,7 +117,7 @@ const Index = () => {
         >
           <motion.div variants={staggerItem}>
             <GlassMorphCard 
-              className="h-full"
+              className={`h-full ${isDemandForecastingSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
               onClick={() => handleCardClick('/data-source', true)}
             >
               <div className="flex flex-col items-center text-center h-full">
@@ -143,36 +167,93 @@ const Index = () => {
           </motion.div>
         </motion.div>
 
-        <Card className="mb-8 opacity-50">
+        <Card className={`mb-8 transition-all duration-300 ${isDemandForecastingSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'opacity-50'}`}>
           <CardContent className="pt-6">
-            <h2 className="text-xl font-semibold mb-6 text-gray-500">Business Context</h2>
+            <h2 className={`text-xl font-semibold mb-6 ${isDemandForecastingSelected ? 'text-gray-900' : 'text-gray-500'}`}>
+              Demand Forecasting Inputs
+            </h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+              {/* Length of Data */}
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Business Type</label>
+                <label className={`block text-sm font-medium mb-2 ${isDemandForecastingSelected ? 'text-gray-700' : 'text-gray-400'}`}>
+                  Length of Data
+                </label>
                 <select 
-                  className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
-                  value={businessType}
-                  onChange={(e) => setBusinessType(e.target.value)}
-                  disabled
+                  className={`w-full p-2 border rounded-md ${
+                    isDemandForecastingSelected 
+                      ? 'border-gray-300 bg-white text-gray-900' 
+                      : 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                  value={lengthOfData}
+                  onChange={(e) => setLengthOfData(e.target.value)}
+                  disabled={!isDemandForecastingSelected}
                 >
-                  <option value="">Select Type</option>
-                  <option value="apparel">Apparel</option>
-                  <option value="beauty">Beauty</option>
-                  <option value="electronics">Electronics</option>
-                  <option value="homeGoods">Home Goods</option>
-                  <option value="food">Food & Beverage</option>
-                  <option value="other">Other</option>
+                  <option value="">Select Length</option>
+                  <option value="year">Year</option>
+                  <option value="custom">Custom</option>
                 </select>
+                {lengthOfData === 'custom' && isDemandForecastingSelected && (
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="number"
+                      placeholder="Years"
+                      className="flex-1 p-2 border border-gray-300 rounded-md"
+                      value={customLengthData.years}
+                      onChange={(e) => setCustomLengthData({...customLengthData, years: e.target.value})}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Months"
+                      className="flex-1 p-2 border border-gray-300 rounded-md"
+                      value={customLengthData.months}
+                      onChange={(e) => setCustomLengthData({...customLengthData, months: e.target.value})}
+                    />
+                  </div>
+                )}
               </div>
 
+              {/* Frequency of Data */}
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Forecasting Horizon</label>
-                <div className="grid grid-cols-4 gap-2">
+                <label className={`block text-sm font-medium mb-2 ${isDemandForecastingSelected ? 'text-gray-700' : 'text-gray-400'}`}>
+                  Frequency of Data
+                </label>
+                <select 
+                  className={`w-full p-2 border rounded-md ${
+                    isDemandForecastingSelected 
+                      ? 'border-gray-300 bg-white text-gray-900' 
+                      : 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                  value={frequencyOfData}
+                  onChange={(e) => setFrequencyOfData(e.target.value)}
+                  disabled={!isDemandForecastingSelected}
+                >
+                  <option value="">Select Frequency</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Biweekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+              {/* Forecasting Horizon */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${isDemandForecastingSelected ? 'text-gray-700' : 'text-gray-400'}`}>
+                  Forecasting Horizon
+                </label>
+                <div className="grid grid-cols-2 gap-2 mb-2">
                   {[30, 60, 90, 180].map((days) => (
                     <label 
                       key={days}
-                      className="flex items-center justify-center p-2 border rounded-md cursor-not-allowed bg-gray-100 border-gray-300 text-gray-400"
+                      className={`flex items-center justify-center p-2 border rounded-md transition-colors ${
+                        isDemandForecastingSelected
+                          ? forecastingHorizon === days.toString()
+                            ? 'bg-blue-500 border-blue-500 text-white'
+                            : 'border-gray-300 hover:bg-gray-50 cursor-pointer'
+                          : 'cursor-not-allowed bg-gray-100 border-gray-300 text-gray-400'
+                      }`}
                     >
                       <input
                         type="radio"
@@ -181,72 +262,74 @@ const Index = () => {
                         value={days}
                         checked={forecastingHorizon === days.toString()}
                         onChange={(e) => setForecastingHorizon(e.target.value)}
-                        disabled
+                        disabled={!isDemandForecastingSelected}
                       />
                       <span>{days} days</span>
                     </label>
                   ))}
                 </div>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-400 mb-2">Sales Channel Split (%)</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Online</label>
+                <label 
+                  className={`flex items-center justify-center p-2 border rounded-md transition-colors ${
+                    isDemandForecastingSelected
+                      ? forecastingHorizon === 'custom'
+                        ? 'bg-blue-500 border-blue-500 text-white'
+                        : 'border-gray-300 hover:bg-gray-50 cursor-pointer'
+                      : 'cursor-not-allowed bg-gray-100 border-gray-300 text-gray-400'
+                  }`}
+                >
                   <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    placeholder="e.g. 60"
-                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
-                    value={salesChannels.online}
-                    onChange={(e) => setSalesChannels({...salesChannels, online: e.target.value})}
-                    disabled
+                    type="radio"
+                    className="sr-only"
+                    name="forecastingHorizon"
+                    value="custom"
+                    checked={forecastingHorizon === 'custom'}
+                    onChange={(e) => setForecastingHorizon(e.target.value)}
+                    disabled={!isDemandForecastingSelected}
                   />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Offline</label>
+                  <span>Custom</span>
+                </label>
+                {forecastingHorizon === 'custom' && isDemandForecastingSelected && (
                   <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    placeholder="e.g. 40"
-                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed"
-                    value={salesChannels.offline}
-                    onChange={(e) => setSalesChannels({...salesChannels, offline: e.target.value})}
-                    disabled
+                    type="text"
+                    placeholder="Enter custom horizon"
+                    className="w-full mt-2 p-2 border border-gray-300 rounded-md"
+                    value={customForecastingHorizon}
+                    onChange={(e) => setCustomForecastingHorizon(e.target.value)}
                   />
-                </div>
+                )}
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Forecasting Goals</label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { id: 'Promotion', label: 'Promotion' },
-                  { id: 'Seasonality', label: 'Seasonality' }
-                ].map((goal) => (
-                  <label 
-                    key={goal.id}
-                    className={`flex items-center p-3 border rounded-md cursor-pointer transition-colors ${
-                      selectedGoal === goal.id 
-                        ? 'bg-blue-50 border-blue-500 text-blue-700' 
-                        : 'border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      name="forecastGoal"
-                      checked={selectedGoal === goal.id}
-                      onChange={() => handleGoalSelect(goal.id)}
-                    />
-                    <span className="text-sm">{goal.label}</span>
-                  </label>
-                ))}
+              {/* Forecasting Frequency */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${isDemandForecastingSelected ? 'text-gray-700' : 'text-gray-400'}`}>
+                  Forecasting Frequency
+                </label>
+                <select 
+                  className={`w-full p-2 border rounded-md ${
+                    isDemandForecastingSelected 
+                      ? 'border-gray-300 bg-white text-gray-900' 
+                      : 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                  value={forecastingFrequency}
+                  onChange={(e) => setForecastingFrequency(e.target.value)}
+                  disabled={!isDemandForecastingSelected}
+                >
+                  <option value="">Select Frequency</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Biweekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="custom">Custom</option>
+                </select>
+                {forecastingFrequency === 'custom' && isDemandForecastingSelected && (
+                  <input
+                    type="text"
+                    placeholder="Enter custom frequency"
+                    className="w-full mt-2 p-2 border border-gray-300 rounded-md"
+                    value={customForecastingFrequency}
+                    onChange={(e) => setCustomForecastingFrequency(e.target.value)}
+                  />
+                )}
               </div>
             </div>
           </CardContent>
@@ -255,7 +338,12 @@ const Index = () => {
         <div className="flex justify-end">
           <Button 
             onClick={handleContinue}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 transition-all duration-300 ${
+              isFormComplete() 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+            disabled={!isFormComplete()}
           >
             Next
             <ArrowRight size={16} />
