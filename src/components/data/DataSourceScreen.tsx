@@ -20,9 +20,9 @@ const DataSourceScreen: React.FC = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-
-  const [pollingStatus, setPollingStatus] = useState<string>("idle"); // ✅ Track status
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);      // ✅ Track interval
+  const [pollingStatus, setPollingStatus] = useState<string>("idle"); // Track status
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);      // Track interval
+  const [isForecastInProgress, setIsForecastInProgress] = useState(false);
   
   useEffect(() => {
     console.log('DataSourceScreen - Forecast Type:', forecastType);
@@ -38,6 +38,16 @@ const DataSourceScreen: React.FC = () => {
     navigate('/');
   };
 
+  // const handleGenerateForecast = () => {
+  //   if (uploadedFiles.length === 0) {
+  //     toast({
+  //       title: "No files uploaded",
+  //       description: "Please upload at least one ZIP file before continuing.",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
+
   const handleGenerateForecast = () => {
     if (uploadedFiles.length === 0) {
       toast({
@@ -47,7 +57,32 @@ const DataSourceScreen: React.FC = () => {
       });
       return;
     }
-    
+  
+    const nonZipFiles = uploadedFiles.filter(file => !file.name.toLowerCase().endsWith('.zip'));
+    if (nonZipFiles.length > 0) {
+      toast({
+        title: "Invalid file format",
+        description: "Only ZIP files are allowed. Please remove any non-ZIP files.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    setIsForecastInProgress(true); // Disable button immediately
+    setUploadError(null);
+    handleUploadToAPI();
+  };
+  
+
+    // Button
+  <motion.button
+    disabled={isForecastInProgress}
+    className={`btn-primary ${isForecastInProgress ? 'opacity-70 cursor-not-allowed' : ''}`}
+  >
+    {isForecastInProgress ? 'Generating...' : 'Generate Forecast'}
+  </motion.button>
+
+
     const nonZipFiles = uploadedFiles.filter(file => !file.name.toLowerCase().endsWith('.zip'));
     if (nonZipFiles.length > 0) {
       toast({
