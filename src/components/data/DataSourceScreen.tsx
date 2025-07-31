@@ -66,30 +66,6 @@ const DataSourceScreen: React.FC = () => {
     handleUploadToAPI();
   };
   
-
-  //   // Button
-  // <motion.button
-  //   disabled={isForecastInProgress}
-  //   className={`btn-primary ${isForecastInProgress ? 'opacity-70 cursor-not-allowed' : ''}`}
-  // >
-  //   {isForecastInProgress ? 'Generating...' : 'Generate Forecast'}
-  // </motion.button>
-
-
-  //   const nonZipFiles = uploadedFiles.filter(file => !file.name.toLowerCase().endsWith('.zip'));
-  //   if (nonZipFiles.length > 0) {
-  //     toast({
-  //       title: "Invalid file format",
-  //       description: "Only ZIP files are allowed. Please remove any non-ZIP files.",
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
-    
-  //   setUploadError(null);
-  //   handleUploadToAPI();
-  // };
-
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
@@ -124,10 +100,11 @@ const DataSourceScreen: React.FC = () => {
 
       if (contentType.includes("application/json")) {
         const result = await response.json();
-        console.log("📡 JSON from /upload:", result);
+        console.log(" JSON from /upload:", result);
 
         toast({ title: "Forecast started", description: "Polling for status..." });
-        startPolling(); // ✅ Poll without job_id
+        setPollingStatus("running");
+        startPolling(); 
         return;
 
       } else if (contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
@@ -165,10 +142,16 @@ const DataSourceScreen: React.FC = () => {
 
         setPollingStatus(statusData.status);
 
+        // Grey out button as soon as status is started or running
+      if (statusData.status === "started" || statusData.status === "running") {
+        setPollingStatus("running");
+      }
+
         if (statusData.status === "completed") {
           console.log(" [Polling] Completed - stopping polling");
           clearInterval(pollingIntervalRef.current!);
           pollingIntervalRef.current = null;
+          setPollingStatus("completed");
 
           // Extract filename from GCS path and set in context
           const gcsPath = statusData.forecast_gcs || '';
@@ -314,8 +297,7 @@ const DataSourceScreen: React.FC = () => {
           whileTap={{ scale: 0.98 }}
           className={`btn-primary ${(isUploading || pollingStatus === 'running') ? 'opacity-70 cursor-not-allowed' : ''}`}
           onClick={handleGenerateForecast}
-          disabled={isUploading || pollingStatus.toLowerCase().includes('running') ||
-            pollingStatus.toLowerCase().includes('forecast started')}
+          disabled={isUploading || pollingStatus === "running" || pollingStatus === "forecast started"}
           >
             {(isUploading || pollingStatus === 'running') ? 'Generating...' : 'Generate Forecast'}
             </motion.button>
