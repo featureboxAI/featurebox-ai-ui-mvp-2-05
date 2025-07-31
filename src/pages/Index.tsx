@@ -36,27 +36,13 @@ const Index = () => {
     }
   };
 
-  // Check if all inputs are filled
-  const isFormComplete = () => {
-    if (!isDemandForecastingSelected) return false;
-    
-    const lengthComplete = lengthOfData === 'year' || 
-      (lengthOfData === 'custom' && customLengthData.years && customLengthData.months);
-    
-    const frequencyComplete = ['weekly', 'biweekly', 'monthly', 'quarterly'].includes(frequencyOfData) ||
-      (frequencyOfData === 'custom' && customFrequencyData);
-    
-    const horizonComplete = ['30', '60', '90', '180'].includes(forecastingHorizon) ||
-      (forecastingHorizon === 'custom' && customForecastingHorizon);
-    
-    const forecastFrequencyComplete = ['weekly', 'biweekly', 'monthly', 'quarterly'].includes(forecastingFrequency) ||
-      (forecastingFrequency === 'custom' && customForecastingFrequency);
-    
-    return lengthComplete && frequencyComplete && horizonComplete && forecastFrequencyComplete;
+  // Allow navigation regardless of form completion
+  const canNavigate = () => {
+    return isDemandForecastingSelected;
   };
 
   const handleContinue = () => {
-    if (isFormComplete()) {
+    if (canNavigate()) {
       console.log('Navigating to next screen');
       navigate('/data-source');
     }
@@ -170,7 +156,7 @@ const Index = () => {
         <Card className={`mb-8 transition-all duration-300 ${isDemandForecastingSelected ? 'ring-2 ring-blue-500 bg-blue-50' : 'opacity-50'}`}>
           <CardContent className="pt-6">
             <h2 className={`text-xl font-semibold mb-6 ${isDemandForecastingSelected ? 'text-gray-900' : 'text-gray-500'}`}>
-              Demand Forecasting Inputs
+              Business Context
             </h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
@@ -233,7 +219,17 @@ const Index = () => {
                   <option value="biweekly">Biweekly</option>
                   <option value="monthly">Monthly</option>
                   <option value="quarterly">Quarterly</option>
+                  <option value="custom">Custom</option>
                 </select>
+                {frequencyOfData === 'custom' && isDemandForecastingSelected && (
+                  <input
+                    type="text"
+                    placeholder="Enter custom frequency"
+                    className="w-full mt-2 p-2 border border-gray-300 rounded-md"
+                    value={customFrequencyData}
+                    onChange={(e) => setCustomFrequencyData(e.target.value)}
+                  />
+                )}
               </div>
             </div>
 
@@ -339,11 +335,11 @@ const Index = () => {
           <Button 
             onClick={handleContinue}
             className={`flex items-center gap-2 transition-all duration-300 ${
-              isFormComplete() 
+              canNavigate() 
                 ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer' 
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
-            disabled={!isFormComplete()}
+            disabled={!canNavigate()}
           >
             Next
             <ArrowRight size={16} />
