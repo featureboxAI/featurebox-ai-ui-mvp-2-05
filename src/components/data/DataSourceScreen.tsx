@@ -38,16 +38,6 @@ const DataSourceScreen: React.FC = () => {
     navigate('/');
   };
 
-  // const handleGenerateForecast = () => {
-  //   if (uploadedFiles.length === 0) {
-  //     toast({
-  //       title: "No files uploaded",
-  //       description: "Please upload at least one ZIP file before continuing.",
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
-
   const handleGenerateForecast = () => {
     if (uploadedFiles.length === 0) {
       toast({
@@ -74,28 +64,28 @@ const DataSourceScreen: React.FC = () => {
   };
   
 
-    // Button
-  <motion.button
-    disabled={isForecastInProgress}
-    className={`btn-primary ${isForecastInProgress ? 'opacity-70 cursor-not-allowed' : ''}`}
-  >
-    {isForecastInProgress ? 'Generating...' : 'Generate Forecast'}
-  </motion.button>
+  //   // Button
+  // <motion.button
+  //   disabled={isForecastInProgress}
+  //   className={`btn-primary ${isForecastInProgress ? 'opacity-70 cursor-not-allowed' : ''}`}
+  // >
+  //   {isForecastInProgress ? 'Generating...' : 'Generate Forecast'}
+  // </motion.button>
 
 
-    const nonZipFiles = uploadedFiles.filter(file => !file.name.toLowerCase().endsWith('.zip'));
-    if (nonZipFiles.length > 0) {
-      toast({
-        title: "Invalid file format",
-        description: "Only ZIP files are allowed. Please remove any non-ZIP files.",
-        variant: "destructive",
-      });
-      return;
-    }
+  //   const nonZipFiles = uploadedFiles.filter(file => !file.name.toLowerCase().endsWith('.zip'));
+  //   if (nonZipFiles.length > 0) {
+  //     toast({
+  //       title: "Invalid file format",
+  //       description: "Only ZIP files are allowed. Please remove any non-ZIP files.",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
     
-    setUploadError(null);
-    handleUploadToAPI();
-  };
+  //   setUploadError(null);
+  //   handleUploadToAPI();
+  // };
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' B';

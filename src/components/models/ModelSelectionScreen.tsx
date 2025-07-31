@@ -8,7 +8,7 @@ import { staggerContainer, staggerItem } from '@/utils/transitions';
 import { useForecast } from '@/context/ForecastContext';
 
 const steps = ["Onboarding", "Data Source", "Model Selection", "Generated Forecast", "Dashboard"];
-const POLLING_INTERVAL = 10 * 1000; // 10 seconds
+const POLLING_INTERVAL = 5 * 60 * 1000; // 10 minutes
 
 const ModelSelectionScreen: React.FC = () => {
   const navigate = useNavigate();
