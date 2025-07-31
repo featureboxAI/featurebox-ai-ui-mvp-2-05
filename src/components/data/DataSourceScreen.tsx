@@ -13,6 +13,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// Polling interval in ms (10 minutes)
+const POLLING_INTERVAL = 10 * 60 * 1000;
+
 const DataSourceScreen: React.FC = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth0();
@@ -181,7 +184,7 @@ const DataSourceScreen: React.FC = () => {
       } catch (err) {
         console.error(" [Polling] Error:", err);
       }
-    }, 5000);
+    }, POLLING_INTERVAL);
   };
 
   const getFileIcon = (fileName: string) => {
