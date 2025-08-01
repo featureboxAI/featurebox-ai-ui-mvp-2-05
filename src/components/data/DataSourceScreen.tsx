@@ -14,7 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Polling interval in ms (10 minutes)
-const POLLING_INTERVAL = 10 * 60 * 1000;
+const POLLING_INTERVAL = 10 * 1000;  
 
 const DataSourceScreen: React.FC = () => {
   const navigate = useNavigate();
