@@ -184,14 +184,24 @@ const AIInsightPanel: React.FC = () => {
 
 ### GOAL From the **new forecast data** you (the model) just received—*note: this is a **chunked portion** of the full dataset*—surface the **top insights** that help users:
 1. Understand material demand swings (biggest MoM jumps & drops) and their likely drivers.
-2. Spot SKU × Channel combinations with consistent growth or decline trends. Use the "hist_june_2025" column to find the percent_change_mom and as a baseline for your AI insights.
+2. Spot SKU × Channel combinations with consistent growth or decline trends.
 3. Detect unusual patterns in history (e.g., long zero-demand periods followed by spikes).
 4. Explain **why** these trends or patterns likely happened, using statistical or business evidence (e.g., promo_flag, seasonality, historical context).
 5. Decide what to act on now (e.g., "stock up", "watch inventory", "investigate promo impact") without forcing them to debug the model.
 
 ### INFORMATION ACCESS You are provided with a **chunked slice** of the overall dataset:
 ${chunkCsv}
-- a partial view of the predictions made by the model
+
+Here is a breakdown of each column in the dataset:
+- sheet: The company that sells the product.
+- item: A unique identifier for the product.
+- model: The model used to generate the forecast values.
+- ds: The date associated with the forecast.
+- forecast: The predicted number of sales for the product on the given date.
+- historical_value: The most recent actual number of sales for the product.
+
+Use the historical_value column as a general historical baseline for your insights.
+To calculate percent_change_mom, compare the forecast to the historical_value column.
 
 *You will see other chunks separately. Treat your response as self-contained, but precise and consistent in format with earlier chunks so we can later combine them.*
 
@@ -205,7 +215,6 @@ ${chunkCsv}
   - Abrupt structural breaks (mean shift, variance jump).
 * Link each insight to plausible drivers (promo_flag, seasonality, external_signals) when evidence exists; otherwise say "driver unknown".
 * For each insight, include a concise **explanation or root cause** of why the trend or anomaly likely occurred.
-* Highlight where model error (MAPE, etc.) is > threshold (default = 40 %) so planners know to double-check.
 * End with **"Planner Actions"**—concise bullets of recommended next steps.
 
 ### STYLE Use plain English phrases—avoid jargon. Keep numeric values to one decimal unless integers. Limit each insight to ≤ 40 words.`;
