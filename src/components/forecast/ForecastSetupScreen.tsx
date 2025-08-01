@@ -8,6 +8,7 @@ import { pageTransition } from '@/utils/transitions';
 import { Card, CardContent } from '@/components/ui/card';
 import { useForecast } from '@/context/ForecastContext';
 import { toast } from "@/components/ui/use-toast";
+import AIInsightPanel from '../dashboard/AIInsightPanel';
 
 
 const steps = ["Onboarding", "Data Source", "Generated Forecast", "Dashboard"];
@@ -112,23 +113,11 @@ const ForecastSetupScreen: React.FC = () => {
             Download Forecast Results
           </motion.button>
         </div>
-
-        <Card className="mb-8 opacity-50">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-gray-400" />
-              <h3 className="font-semibold text-lg text-gray-500">AI Insights & Analysis</h3>
-            </div>
-
-            <p className="text-sm text-gray-400">
-              Detailed AI insights and recommendations will be available in the dashboard after you continue.
-              The downloaded Excel file contains your complete forecast data with predictions and confidence intervals.
-            </p>
-          </CardContent>
-        </Card>
       </motion.div>
 
-      <div className="flex justify-between">
+      <AIInsightPanel/>
+
+      <div className="mt-10 flex justify-between">
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -142,8 +131,9 @@ const ForecastSetupScreen: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="btn-primary"
+          className={`btn-primary ${!forecastResult ? 'opacity-50 cursor-not-allowed' : ''}`}
           onClick={handleContinue}
+          disabled={!forecastResult}
         >
           Continue to Dashboard
         </motion.button>
@@ -153,8 +143,3 @@ const ForecastSetupScreen: React.FC = () => {
 };
 
 export default ForecastSetupScreen;
-
-
-
-
-

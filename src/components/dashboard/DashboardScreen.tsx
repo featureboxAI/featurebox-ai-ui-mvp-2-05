@@ -157,8 +157,6 @@ const DashboardScreen: React.FC = () => {
           </Card>
 
           <ForecastTable />
-          
-          <AIInsightPanel insights={insights} />
         </TabsContent>
         
         <TabsContent value="explanation" className="space-y-6">
