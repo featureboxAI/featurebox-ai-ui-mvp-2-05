@@ -61,7 +61,7 @@ const App = () => (
                 <DataSourceScreen />
               </ProtectedRoute>
             } />
-            <Route path="/forecast-setup" element={
+            <Route path="/forecast-results" element={
               <ProtectedRoute 
                 allowedUserIds={[...ADMIN_USER_IDS, ...FORECASTING_ACCESS_USER_IDS]}
                 restrictedUserIds={FORECASTING_RESTRICTED_USER_IDS}

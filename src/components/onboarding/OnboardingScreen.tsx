@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LineChart, Briefcase, TrendingUp } from 'lucide-react';
+import { LineChart, Briefcase, TrendingUp, Info } from 'lucide-react';
 import AnimatedCard from '../ui/AnimatedCard';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import { staggerContainer, staggerItem } from '@/utils/transitions';
@@ -121,7 +121,15 @@ const OnboardingScreen: React.FC = () => {
       </div>
 
       <GlassMorphCard className="mb-12" hover={false}>
-        <h2 className="text-xl font-semibold mb-6">Tell us about your business</h2>
+        <div className="flex items-center gap-2 mb-6">
+          <h2 className="text-xl font-semibold">Tell us about your business</h2>
+          <div className="relative group">
+            <Info size={16} className="text-gray-400 cursor-help" />
+            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              Your forecasting settings are already customized for your business. You can skip the business-context step and simply click "Next."
+            </div>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Business Type</label>

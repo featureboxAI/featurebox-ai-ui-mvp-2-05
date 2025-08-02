@@ -4,7 +4,8 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 export interface ForecastResult {
   filename: string;
   downloadableFile?: Blob;
-  download_url?: string;  
+  download_url?: string;
+  model_selected?: string;
 }
   
 //   sarima?: {

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
-import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Check, X, AlertCircle, LogOut } from 'lucide-react';
+import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Check, X, AlertCircle, LogOut, User } from 'lucide-react';
 import { File as FileIcon } from 'lucide-react';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import FileUploadModal from '../ui/FileUploadModal';
@@ -118,7 +118,7 @@ const DataSourceScreen: React.FC = () => {
         }
   
         setForecastResult({ filename, downloadableFile: blob });
-        navigate('/forecast-setup');
+        navigate('/forecast-results');
       }
   
     } catch (error) {
@@ -162,7 +162,7 @@ const DataSourceScreen: React.FC = () => {
           });
 
           toast({ title: "Forecast Complete", description: "Redirecting to results..." });
-          navigate('/forecast-setup');
+          navigate('/forecast-results');
         }
       } catch (err) {
         console.error(" [Polling] Error:", err);
@@ -184,12 +184,12 @@ const DataSourceScreen: React.FC = () => {
     <div className="container max-w-5xl px-4 py-12 mx-auto">
       <div className="flex items-center justify-between mb-8">
         <motion.div 
-          className="text-center flex-1"
+          className="text-center w-full"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Connect Your Data</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2 text-center">Connect Your Data</h1>
           <p className="text-lg text-gray-600">Upload your ZIP file containing sales and inventory data.</p>
           {forecastType && (
             <p className="mt-2 text-sm font-medium text-primary">Selected forecast type: {forecastType}</p>
@@ -199,7 +199,14 @@ const DataSourceScreen: React.FC = () => {
           )}
         </motion.div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">Welcome, {user?.name}</span>
+          <div className="relative group">
+            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
+              <User size={16} className="text-gray-600" />
+            </div>
+            <div className="absolute right-0 top-10 bg-white border rounded-lg shadow-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              Hello, {user?.email || 'User'}
+            </div>
+          </div>
           <Button 
             onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
             variant="outline"

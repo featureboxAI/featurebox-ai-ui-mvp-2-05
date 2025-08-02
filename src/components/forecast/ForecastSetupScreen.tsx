@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Sparkles, CheckCircle } from 'lucide-react';
+import { useAuth0 } from '@auth0/auth0-react';
+import { ArrowLeft, Download, Sparkles, CheckCircle, User, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
 import { pageTransition } from '@/utils/transitions';
@@ -15,6 +17,7 @@ const steps = ["Onboarding", "Data Source", "Generated Forecast", "Dashboard"];
 
 const ForecastSetupScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { logout, user } = useAuth0();
   const { forecastType, uploadedFiles, forecastResult } = useForecast();
 
   useEffect(() => {
@@ -64,9 +67,32 @@ const ForecastSetupScreen: React.FC = () => {
     >
       <ProgressIndicator steps={steps} currentStep={2} />
 
+      <div className="flex items-center justify-between mb-8">
+        <div className="text-center w-full">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Generated Forecast</h1>
+          <p className="text-lg text-gray-600">Your forecast has been generated successfully.</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="relative group">
+            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
+              <User size={16} className="text-gray-600" />
+            </div>
+            <div className="absolute right-0 top-10 bg-white border rounded-lg shadow-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+              Hello, {user?.email || 'User'}
+            </div>
+          </div>
+          <Button 
+            onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <LogOut size={16} />
+            Logout
+          </Button>
+        </div>
+      </div>
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Generated Forecast</h1>
-        <p className="text-lg text-gray-600">Your forecast has been generated successfully.</p>
         {forecastType && (
           <p className="mt-2 text-sm font-medium text-primary">Using forecast type: {forecastType}</p>
         )}
