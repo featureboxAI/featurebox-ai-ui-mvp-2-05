@@ -16,19 +16,25 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-// Example user IDs - replace with actual Auth0 user IDs
+// Admin users - Access all features
 const ADMIN_USER_IDS = [
-  'auth0|688800626594333b2d3813ab', // karthik's user id
-  'google-oauth2|108770588093688005437'  // team@featureboxai.com user id
+  'auth0|687f02eafb6744d5fe3c9f8a', // team@featureboxai.com - Admin
+  'auth0|687f0e3dfb6744d5fe3ca0f6', // 1994ssmalla@gmail.com - Admin
 ];
 
-const RESTRICTED_USER_IDS = [
+// Users with access to Market Trends + Demand Forecasting
+const FORECASTING_ACCESS_USER_IDS = [
+  'auth0|688e5737480c85818cab73ba', // kvalluri@berkeley.edu - Ladera Dummy User
+  'auth0|687f0be2fb6744d5fe3ca09f', // malla95.supraja@gmail.com - Herb Farms Dummy User
 ];
 
-// User restricted from forecasting features
+// Users restricted from forecasting features (Market Trends Only)
 const FORECASTING_RESTRICTED_USER_IDS = [
-  'auth0|68884faae8ffc9f5c2dd2e92', // Sienna Wings
-  //'auth0|688800626594333b2d3813ab', // karthik's user id
+  'auth0|688800626594333b2d3813ab', // karthikv722@gmail.com - Sienna Wings Dummy
+];
+
+// Users with no restrictions (can access Market Trends)
+const RESTRICTED_USER_IDS = [
 ];
 
 const App = () => (
@@ -48,12 +54,18 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/data-source" element={
-              <ProtectedRoute restrictedUserIds={FORECASTING_RESTRICTED_USER_IDS}>
+              <ProtectedRoute 
+                allowedUserIds={[...ADMIN_USER_IDS, ...FORECASTING_ACCESS_USER_IDS]}
+                restrictedUserIds={FORECASTING_RESTRICTED_USER_IDS}
+              >
                 <DataSourceScreen />
               </ProtectedRoute>
             } />
             <Route path="/forecast-setup" element={
-              <ProtectedRoute restrictedUserIds={FORECASTING_RESTRICTED_USER_IDS}>
+              <ProtectedRoute 
+                allowedUserIds={[...ADMIN_USER_IDS, ...FORECASTING_ACCESS_USER_IDS]}
+                restrictedUserIds={FORECASTING_RESTRICTED_USER_IDS}
+              >
                 <ForecastSetupScreen />
               </ProtectedRoute>
             } />
@@ -63,7 +75,9 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/market-trends" element={
-              <ProtectedRoute restrictedUserIds={RESTRICTED_USER_IDS}>
+              <ProtectedRoute 
+                allowedUserIds={[...ADMIN_USER_IDS, ...FORECASTING_ACCESS_USER_IDS, ...FORECASTING_RESTRICTED_USER_IDS]}
+              >
                 <MarketTrendsScreen />
               </ProtectedRoute>
             } />
