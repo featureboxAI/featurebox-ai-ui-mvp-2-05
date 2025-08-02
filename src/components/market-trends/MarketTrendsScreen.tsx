@@ -98,8 +98,10 @@ const MarketTrendsScreen: React.FC = () => {
 
     if (selectedSource === 'google') {
       try {
+        const headers = await config.getHeaders();
         const response = await fetch(
-          `${config.apiBaseUrl}/trends/${encodeURIComponent(selectedCategory)}/${encodeURIComponent(selectedKeyword)}?timeframe=${timeframe}`
+          `${config.apiBaseUrl}/trends/${encodeURIComponent(selectedCategory)}/${encodeURIComponent(selectedKeyword)}?timeframe=${timeframe}`,
+          { headers }
         );
 
         if (!response.ok) {

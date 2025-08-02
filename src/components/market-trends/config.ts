@@ -1,9 +1,7 @@
 // API configuration for market trends
 const config = {
-  // Backend URL - use proxy in development, direct URL in production
-  apiBaseUrl: import.meta.env.DEV 
-    ? '/api/trends' 
-    : 'https://trends-dashboard-backend-766707302238.europe-west1.run.app',
+  // Use proxy endpoint to avoid CORS issues
+  apiBaseUrl: '/api/trends',
   
   // Function to get headers for API calls
   getHeaders: async () => {
