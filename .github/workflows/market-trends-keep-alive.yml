@@ -1,0 +1,23 @@
+name: Keep Market Trends Backend Alive
+
+on:
+  schedule:
+    # Run every 8 minutes
+    - cron: '*/8 * * * *'
+  # Also run manually if needed
+  workflow_dispatch:
+
+jobs:
+  ping-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Market Trends Backend Base URL
+        run: |
+          echo "Pinging backend to keep it warm..."
+          curl -f https://trends-dashboard-backend-766707302238.europe-west1.run.app/ || echo "Backend not responding"
+          
+      - name: Log Success
+        run: |
+          echo "✅ Backend pinged successfully at $(date)"
+          echo "Next ping in 8 minutes..." 
