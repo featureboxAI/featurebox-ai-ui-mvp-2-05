@@ -88,9 +88,22 @@ const DataSourceScreen: React.FC = () => {
         throw new Error("No file selected.");
       }
   
-      console.log("Uploading files to API...");
-  
-      const response = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/upload/`, {
+            console.log("Uploading files to API...");
+
+      // Simple user-based backend routing
+      let backendUrl = 'https://featurebox-ai-backend-service-666676702816.us-west1.run.app'; // Default
+      
+      if (user?.sub === 'auth0|688e5737480c85818cab73ba' || user?.sub === 'auth0|68885310e8ffc9f5c2dd2f14') {
+        backendUrl = 'https://ladera-featurebox-ai-backend-service-666676702816.us-west1.run.app';
+        console.log('Ladera user detected, using Ladera backend');
+      } else if (user?.sub === 'auth0|687f0be2fb6744d5fe3ca09f' || user?.sub === 'auth0|688849466594333b2d382039') {
+        backendUrl = 'https://featurebox-ai-backend-service-666676702816.us-west1.run.app';
+        console.log('Herb Farms user detected, using Herb Farms backend');
+      } else {
+        console.log('Default user, using default backend');
+      }
+
+      const response = await fetch(`${backendUrl}/upload/`, {
         method: "POST",
         body: formData,
       });

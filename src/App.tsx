@@ -24,8 +24,10 @@ const ADMIN_USER_IDS = [
 
 // Users with access to Market Trends + Demand Forecasting
 const FORECASTING_ACCESS_USER_IDS = [
-  'auth0|688e5737480c85818cab73ba', // kvalluri@berkeley.edu - Ladera Dummy User
-  'auth0|687f0be2fb6744d5fe3ca09f', // malla95.supraja@gmail.com - Herb Farms Dummy User
+  'auth0|688e5737480c85818cab73ba', // kvalluri@berkeley.edu - Ladera Dummy
+  'auth0|68885310e8ffc9f5c2dd2f14', // tetrud@berkeley.edu - Actual Ladera
+  'auth0|687f0be2fb6744d5fe3ca09f', // malla95.supraja@gmail.com - Herb Farms Dummy
+  'auth0|688849466594333b2d382039', // sjames@herb-pharm.com - Actual Herb Farms
 ];
 
 // Users restricted from forecasting features (Market Trends Only)
