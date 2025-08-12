@@ -31,6 +31,47 @@ const DataSourceScreen: React.FC = () => {
     console.log('DataSourceScreen - Forecast Type:', forecastType);
   }, [forecastType]);
 
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (!document.hidden && pollingStatus === 'running') {
+        console.log('[Visibility] Tab became active, checking status immediately');
+        try {
+          const res = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/status`);
+          const statusData = await res.json();
+          console.log('[Visibility] Status check result:', statusData);
+
+          if (statusData.status === "completed") {
+            console.log('[Visibility] Found completed status on tab activation');
+
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+
+            setPollingStatus("completed");
+
+            const gcsPath = statusData.forecast_gcs || '';
+            const filename = gcsPath.split('/').pop() || 'forecast_results.xlsx';
+            setForecastResult({
+              filename,
+              downloadableFile: null
+            });
+            toast({ title: "Forecast Complete", description: "Redirecting to results..." });
+              navigate('/forecast-results');
+            }
+          } catch (error) {
+            console.error('[Visibility] Status check failed:', error);
+          }
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    }, [pollingStatus, navigate, setForecastResult, toast]);
+  
   const handleSourceSelect = (source: string) => {
     if (source === 'zip') {
       setIsUploadModalOpen(true);

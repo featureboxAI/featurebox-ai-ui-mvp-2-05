@@ -8,7 +8,7 @@ import { staggerContainer, staggerItem } from '@/utils/transitions';
 import { useForecast } from '@/context/ForecastContext';
 
 const steps = ["Onboarding", "Data Source", "Model Selection", "Generated Forecast", "Dashboard"];
-const POLLING_INTERVAL = 10 * 1000; // 10 minutes
+// const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 const ModelSelectionScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -47,7 +47,7 @@ const ModelSelectionScreen: React.FC = () => {
       const checkStatus = async () => {
         console.log('[DEBUG] Polling: Checking forecast status...');
         try {
-          const res = await fetch("https://featurebox-ai-backend-service-666676702816.us-west1.run.app/status");
+          const res = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/status`);
           if (!res.ok) throw new Error(`Status check failed: ${res.status}`);
           const data = await res.json();
           console.log('[DEBUG] Forecast status:', data);
