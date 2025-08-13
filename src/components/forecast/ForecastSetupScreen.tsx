@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
-import { ArrowLeft, Download, Sparkles, CheckCircle, User, LogOut } from 'lucide-react';
+import { ArrowLeft, Download, Sparkles, CheckCircle, User, LogOut, Calendar, FileText, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import ProgressIndicator from '../ui/ProgressIndicator';
@@ -12,6 +12,14 @@ import { useForecast } from '@/context/ForecastContext';
 import { toast } from "@/components/ui/use-toast";
 import AIInsightPanel from '../dashboard/AIInsightPanel';
 
+interface ForecastHistoryItem {
+  filename: string;
+  blob_path: string;
+  formatted_date: string;
+  formatted_time: string;
+  status: string;
+}
+
 
 const steps = ["Onboarding", "Data Source", "Generated Forecast", "Dashboard"];
 
@@ -19,12 +27,62 @@ const ForecastSetupScreen: React.FC = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth0();
   const { forecastType, uploadedFiles, forecastResult } = useForecast();
+  const [forecastHistory, setForecastHistory] = useState<ForecastHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     console.log('ForecastSetupScreen - Forecast Type:', forecastType);
     console.log('ForecastSetupScreen - Uploaded Files:', uploadedFiles.map(file => file.name));
     console.log('ForecastSetupScreen - Forecast Result:', forecastResult);
   }, [forecastType, uploadedFiles, forecastResult]);
+
+  // Fetch forecast history when component mounts
+  useEffect(() => {
+    fetchForecastHistory();
+  }, []);
+
+  const fetchForecastHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/forecast-history?limit=3`);
+      if (response.ok) {
+        const data = await response.json();
+        setForecastHistory(data.forecasts || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch forecast history:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleDownloadHistoryFile = async (blobPath: string, filename: string) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_AUTH_API_URL}/download-forecast-file?blob_path=${encodeURIComponent(blobPath)}`
+      );
+      
+      if (!response.ok) throw new Error("Download failed");
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "Could not download the selected file.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleBack = () => {
     navigate('/data-source');
@@ -115,29 +173,100 @@ const ForecastSetupScreen: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="bg-white rounded-xl p-8 shadow-sm mb-8 border border-gray-100 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center">
-              <CheckCircle size={32} />
+        <div className="bg-white rounded-xl p-6 shadow-sm mb-6 border border-gray-100 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center">
+              <CheckCircle size={24} />
             </div>
           </div>
 
-          <h2 className="text-2xl font-semibold mb-4">Forecast Generated Successfully!</h2>
-          <p className="text-gray-600 mb-8">
-            Your demand forecast has been processed and is ready for download. 
-            Click the button below to download your results as an Excel file.
+          <h2 className="text-xl font-semibold mb-3">Forecast Generated Successfully!</h2>
+          <p className="text-gray-600 mb-6 text-sm">
+            Your demand forecast has been processed and is ready for download.
           </p>
 
           <motion.button 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="btn-primary flex items-center mx-auto text-lg px-8 py-4"
+            whileHover={{ scale: forecastResult?.filename ? 1.05 : 1 }}
+            whileTap={{ scale: forecastResult?.filename ? 0.95 : 1 }}
+            className={`btn-primary flex items-center mx-auto px-6 py-3 ${
+              !forecastResult?.filename ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
             onClick={handleExportToExcel}
             disabled={!forecastResult?.filename} 
           >
-            <Download size={24} className="mr-3" />
+            <Download size={20} className="mr-2" />
             Download Forecast Results
           </motion.button>
+        </div>
+
+        {/* Latest Forecast Results Table */}
+        <div className="bg-white rounded-xl p-6 shadow-sm mb-8 border border-gray-100">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-lg">Latest Forecast Results</h3>
+          </div>
+          
+          {loadingHistory ? (
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+              <p className="text-sm text-muted-foreground mt-2">Loading forecast history...</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {forecastHistory.length > 0 ? (
+                forecastHistory.map((forecast, index) => (
+                  <div key={forecast.blob_path} className="bg-muted/30 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <div className={`w-2 h-2 rounded-full mt-2 ${
+                            index === 0 ? 'bg-green-500' : 'bg-gray-400'
+                          }`}></div>
+                        </div>
+                        <div className="ml-3 flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <FileText className="h-4 w-4 text-gray-500" />
+                            <p className="text-sm font-medium">
+                              {forecast.filename}
+                            </p>
+                            {index === 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                Latest
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>{forecast.formatted_date}</span>
+                            </div>
+                            <span>{forecast.formatted_time}</span>
+                            <span className="font-medium">Status:</span>
+                            <span className="text-green-600">{forecast.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadHistoryFile(forecast.blob_path, forecast.filename)}
+                          className="text-xs"
+                        >
+                          <Download size={14} className="mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">No forecast history available</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </motion.div>
 

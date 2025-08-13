@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
-import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Check, X, AlertCircle, LogOut, User } from 'lucide-react';
+import { Database, Upload, FileSpreadsheet, FileArchive, ArrowLeft, Check, X, AlertCircle, LogOut, User, BarChart3 } from 'lucide-react';
 import { File as FileIcon } from 'lucide-react';
 import GlassMorphCard from '../ui/GlassMorphCard';
 import FileUploadModal from '../ui/FileUploadModal';
@@ -80,6 +80,10 @@ const DataSourceScreen: React.FC = () => {
 
   const handleBack = () => {
     navigate('/');
+  };
+
+  const handleForecastResults = () => {
+    navigate('/forecast-results');
   };
 
   const handleGenerateForecast = () => {
@@ -343,7 +347,7 @@ const DataSourceScreen: React.FC = () => {
         </div>
       </GlassMorphCard>
       
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -353,6 +357,17 @@ const DataSourceScreen: React.FC = () => {
           <ArrowLeft size={18} className="mr-2" />
           Back
         </motion.button>
+        
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="btn-outline flex items-center"
+          onClick={handleForecastResults}
+        >
+          <BarChart3 size={18} className="mr-2" />
+          Forecast Results
+        </motion.button>
+        
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
