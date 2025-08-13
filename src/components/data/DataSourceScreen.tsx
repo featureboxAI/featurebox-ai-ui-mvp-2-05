@@ -19,58 +19,35 @@ const POLLING_INTERVAL = 5 * 60 * 1000;
 const DataSourceScreen: React.FC = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth0();
-  const { forecastType, uploadedFiles, removeUploadedFile, isUploadSuccessful, setForecastResult } = useForecast();
+  const { forecastType, uploadedFiles, removeUploadedFile, isUploadSuccessful, setForecastResult, globalForecastStatus, setGlobalForecastStatus, startGlobalPolling, stopGlobalPolling } = useForecast();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [pollingStatus, setPollingStatus] = useState<string>("idle"); // Track status
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);      // Track interval
-  const [isForecastInProgress, setIsForecastInProgress] = useState(false);
   
   useEffect(() => {
     console.log('DataSourceScreen - Forecast Type:', forecastType);
   }, [forecastType]);
 
+  // Cleanup global polling on unmount
   useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (!document.hidden && pollingStatus === 'running') {
-        console.log('[Visibility] Tab became active, checking status immediately');
-        try {
-          const res = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/status`);
-          const statusData = await res.json();
-          console.log('[Visibility] Status check result:', statusData);
+    return () => {
+      // No need to clean up global polling here as it's managed globally
+      console.log('[Cleanup] DataSourceScreen unmounted');
+    };
+  }, []);
 
-          if (statusData.status === "completed") {
-            console.log('[Visibility] Found completed status on tab activation');
 
-            if (pollingIntervalRef.current) {
-              clearInterval(pollingIntervalRef.current);
-              pollingIntervalRef.current = null;
-            }
-
-            setPollingStatus("completed");
-
-            const gcsPath = statusData.forecast_gcs || '';
-            const filename = gcsPath.split('/').pop() || 'forecast_results.xlsx';
-            setForecastResult({
-              filename,
-              downloadableFile: null
-            });
-            toast({ title: "Forecast Complete", description: "Redirecting to results..." });
-              navigate('/forecast-results');
-            }
-          } catch (error) {
-            console.error('[Visibility] Status check failed:', error);
-          }
-        }
-      };
-
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-
-      return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      };
-    }, [pollingStatus, navigate, setForecastResult, toast]);
+  // Handle forecast failure only - completed status handled by global polling redirect
+  useEffect(() => {
+    if (globalForecastStatus === "failed") {
+      setUploadError("Forecast failed. Please try again.");
+      toast({
+        title: "Forecast Failed",
+        description: "The forecast process encountered an error.",
+        variant: "destructive",
+      });
+    }
+  }, [globalForecastStatus, toast]);
   
   const handleSourceSelect = (source: string) => {
     if (source === 'zip') {
@@ -106,8 +83,8 @@ const DataSourceScreen: React.FC = () => {
       return;
     }
   
-    setIsForecastInProgress(true); // Disable button immediately
     setUploadError(null);
+    setGlobalForecastStatus("running"); // Set global status immediately when forecast starts
     handleUploadToAPI();
   };
   
@@ -161,8 +138,8 @@ const DataSourceScreen: React.FC = () => {
         console.log(" JSON from /upload:", result);
 
         toast({ title: "Forecast started", description: "Polling for status..." });
-        setPollingStatus("running");
-        startPolling(); 
+        setGlobalForecastStatus("running");
+        startGlobalPolling(); 
         return;
 
       } else if (contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
@@ -187,46 +164,6 @@ const DataSourceScreen: React.FC = () => {
     }
   };  
 
-  // Polling logic with debug logs
-  const startPolling = () => {
-    console.log(" [Polling] Starting polling to /status");
-    pollingIntervalRef.current = setInterval(async () => {
-      console.log(" [Polling] Tick - calling /status");
-      try {
-        const res = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/status`);
-        console.log(" [Polling] Response status:", res.status);
-        const statusData = await res.json();
-        console.log(" [Polling] Response JSON:", statusData);
-
-        setPollingStatus(statusData.status);
-
-        // Grey out button as soon as status is started or running
-      if (statusData.status === "started" || statusData.status === "running") {
-        setPollingStatus("running");
-      }
-
-        if (statusData.status === "completed") {
-          console.log(" [Polling] Completed - stopping polling");
-          clearInterval(pollingIntervalRef.current!);
-          pollingIntervalRef.current = null;
-          setPollingStatus("completed");
-
-          // Extract filename from GCS path and set in context
-          const gcsPath = statusData.forecast_gcs || '';
-          const filename = gcsPath.split('/').pop() || 'forecast_results.xlsx';
-          setForecastResult({
-            filename,
-            downloadableFile: null // file will be downloaded via /download-forecast
-          });
-
-          toast({ title: "Forecast Complete", description: "Redirecting to results..." });
-          navigate('/forecast-results');
-        }
-      } catch (err) {
-        console.error(" [Polling] Error:", err);
-      }
-    }, POLLING_INTERVAL);
-  };
 
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
@@ -252,8 +189,8 @@ const DataSourceScreen: React.FC = () => {
           {forecastType && (
             <p className="mt-2 text-sm font-medium text-primary">Selected forecast type: {forecastType}</p>
           )}
-          {pollingStatus !== "idle" && (
-            <p className="mt-2 text-sm text-blue-500">Status: {pollingStatus}</p>
+          {globalForecastStatus !== "idle" && (
+            <p className="mt-2 text-sm text-blue-500">Status: {globalForecastStatus}</p>
           )}
         </motion.div>
         <div className="flex items-center gap-4">
@@ -371,11 +308,11 @@ const DataSourceScreen: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className={`btn-primary ${(isUploading || pollingStatus === 'running') ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className={`btn-primary ${(isUploading || globalForecastStatus === 'running' || globalForecastStatus === 'started') ? 'opacity-70 cursor-not-allowed' : ''}`}
           onClick={handleGenerateForecast}
-          disabled={isUploading || pollingStatus === "running" || pollingStatus === "forecast started"}
+          disabled={isUploading || globalForecastStatus === "running" || globalForecastStatus === "started"}
           >
-            {(isUploading || pollingStatus === 'running') ? 'Generating...' : 'Generate Forecast'}
+            {(isUploading || globalForecastStatus === 'running' || globalForecastStatus === 'started') ? 'Generating...' : 'Generate Forecast'}
             </motion.button>
       </div>
       

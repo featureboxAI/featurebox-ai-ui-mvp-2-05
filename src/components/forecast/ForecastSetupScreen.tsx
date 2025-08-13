@@ -94,25 +94,41 @@ const ForecastSetupScreen: React.FC = () => {
 
   const handleExportToExcel = async () => {
     try {
+      console.log("Starting download. Forecast result:", forecastResult);
       const response = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/download-forecast`);
-      if (!response.ok) throw new Error("Download failed");
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers);
+      
+      if (!response.ok) throw new Error(`Download failed with status: ${response.status}`);
   
       const blob = await response.blob();
+      console.log("Blob size:", blob.size, "Type:", blob.type);
+      
+      // Check if the blob is empty or has wrong type
+      if (blob.size === 0) {
+        throw new Error("Downloaded file is empty");
+      }
+      
       const url = window.URL.createObjectURL(blob);
   
       const link = document.createElement('a');
       link.href = url;
-      link.download = forecastResult?.filename ||'forecast_results.xlsx'; // default filename
+      link.download = forecastResult?.filename || 'forecast_results.xlsx';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
   
-      console.log(" Forecast downloaded successfully");
+      console.log("Forecast downloaded successfully");
+      toast({
+        title: "Download successful",
+        description: "Forecast results downloaded successfully.",
+      });
     } catch (err) {
-      console.error(" Download failed:", err);
+      console.error("Download failed:", err);
       toast({
         title: "Download failed",
-        description: "Could not download forecast result. Please try again.",
+        description: `Could not download forecast result: ${(err as Error).message}`,
         variant: "destructive",
       });
     }
