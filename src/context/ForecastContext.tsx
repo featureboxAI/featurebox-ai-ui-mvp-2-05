@@ -6,6 +6,7 @@ export interface ForecastResult {
   downloadableFile?: Blob;
   download_url?: string;
   model_selected?: string;
+  completedAt?: Date;
 }
   
 //   sarima?: {
@@ -45,11 +46,41 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
   const [forecastType, setForecastType] = useState<string>('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isUploadSuccessful, setIsUploadSuccessful] = useState<boolean>(false);
-  const [forecastResult, setForecastResult] = useState<ForecastResult | null>(null);
+  const [forecastResult, setForecastResultState] = useState<ForecastResult | null>(() => {
+    // Load from localStorage on init
+    try {
+      const saved = localStorage.getItem('forecastResult');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Convert completedAt string back to Date
+        if (parsed.completedAt) {
+          parsed.completedAt = new Date(parsed.completedAt);
+        }
+        return parsed;
+      }
+    } catch (error) {
+      console.error('Failed to load forecast result from localStorage:', error);
+    }
+    return null;
+  });
   const [globalForecastStatus, setGlobalForecastStatus] = useState<string>('idle');
   const globalPollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+  // Wrapper function to save to localStorage whenever forecast result is set
+  const setForecastResult = (result: ForecastResult | null) => {
+    setForecastResultState(result);
+    try {
+      if (result) {
+        localStorage.setItem('forecastResult', JSON.stringify(result));
+      } else {
+        localStorage.removeItem('forecastResult');
+      }
+    } catch (error) {
+      console.error('Failed to save forecast result to localStorage:', error);
+    }
+  };
 
   const startGlobalPolling = () => {
     // Prevent multiple polling intervals
@@ -83,7 +114,8 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
           const filename = gcsPath.split('/').pop() || 'forecast_results.xlsx';
           setForecastResult({
             filename,
-            download_url: statusData.forecast_gcs || ''
+            download_url: statusData.forecast_gcs || '',
+            completedAt: new Date()
           });
           
           // Navigate to results page automatically only when forecast completes

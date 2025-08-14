@@ -29,17 +29,50 @@ const ForecastSetupScreen: React.FC = () => {
   const { forecastType, uploadedFiles, forecastResult } = useForecast();
   const [forecastHistory, setForecastHistory] = useState<ForecastHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
     console.log('ForecastSetupScreen - Forecast Type:', forecastType);
     console.log('ForecastSetupScreen - Uploaded Files:', uploadedFiles.map(file => file.name));
     console.log('ForecastSetupScreen - Forecast Result:', forecastResult);
-  }, [forecastType, uploadedFiles, forecastResult]);
+    console.log('ForecastSetupScreen - Is Expired:', isExpired);
+    if (forecastResult?.completedAt) {
+      console.log('ForecastSetupScreen - Completed At:', forecastResult.completedAt);
+      const now = new Date();
+      const timeDiff = now.getTime() - new Date(forecastResult.completedAt).getTime();
+      console.log('ForecastSetupScreen - Time since completion (minutes):', timeDiff / (1000 * 60));
+    }
+  }, [forecastType, uploadedFiles, forecastResult, isExpired]);
 
   // Fetch forecast history when component mounts
   useEffect(() => {
     fetchForecastHistory();
   }, []);
+
+  // Check if forecast result has expired (1 hour after completion)
+  useEffect(() => {
+    const checkExpiration = () => {
+      if (forecastResult?.completedAt) {
+        const now = new Date();
+        const completedAt = new Date(forecastResult.completedAt);
+        const oneHourLater = new Date(completedAt.getTime() + 60 * 60 * 1000); // 1 hour in milliseconds
+        const expired = now > oneHourLater;
+        console.log('Expiration check:', { now, completedAt, oneHourLater, expired });
+        setIsExpired(expired);
+      } else {
+        console.log('No forecast result or completedAt timestamp - button should be greyed');
+        setIsExpired(true); // Default to expired/greyed when no forecast result
+      }
+    };
+
+    // Check immediately
+    checkExpiration();
+
+    // Set up interval to check every minute
+    const interval = setInterval(checkExpiration, 60000);
+
+    return () => clearInterval(interval);
+  }, [forecastResult]);
 
   const fetchForecastHistory = async () => {
     setLoadingHistory(true);
@@ -144,7 +177,7 @@ const ForecastSetupScreen: React.FC = () => {
       <div className="flex items-center justify-between mb-8">
         <div className="text-center w-full">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Generated Forecast</h1>
-          <p className="text-lg text-gray-600">Your forecast has been generated successfully.</p>
+          {/* <p className="text-lg text-gray-600">Your forecast has been generated successfully.</p> */}
         </div>
         <div className="flex items-center gap-4">
           <div className="relative group">
@@ -202,16 +235,16 @@ const ForecastSetupScreen: React.FC = () => {
           </p>
 
           <motion.button 
-            whileHover={{ scale: forecastResult?.filename ? 1.05 : 1 }}
-            whileTap={{ scale: forecastResult?.filename ? 0.95 : 1 }}
+            whileHover={{ scale: (forecastResult?.filename && !isExpired) ? 1.05 : 1 }}
+            whileTap={{ scale: (forecastResult?.filename && !isExpired) ? 0.95 : 1 }}
             className={`btn-primary flex items-center mx-auto px-6 py-3 ${
-              !forecastResult?.filename ? 'opacity-50 cursor-not-allowed' : ''
+              (!forecastResult?.filename || isExpired) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             onClick={handleExportToExcel}
-            disabled={!forecastResult?.filename} 
+            disabled={!forecastResult?.filename || isExpired} 
           >
             <Download size={20} className="mr-2" />
-            Download Forecast Results
+            {isExpired ? (forecastResult?.completedAt ? 'Download Expired (1 hour limit)' : 'No Recent Forecast') : 'Download Forecast Results'}
           </motion.button>
         </div>
 
@@ -256,7 +289,7 @@ const ForecastSetupScreen: React.FC = () => {
                               <Calendar className="h-3 w-3" />
                               <span>{forecast.formatted_date}</span>
                             </div>
-                            <span>{forecast.formatted_time}</span>
+                            <span>{forecast.formatted_time} UTC</span>
                             <span className="font-medium">Status:</span>
                             <span className="text-green-600">{forecast.status}</span>
                           </div>
