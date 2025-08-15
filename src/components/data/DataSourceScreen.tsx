@@ -201,32 +201,8 @@ const DataSourceScreen: React.FC = () => {
 
   return (
     <div className="container max-w-5xl px-4 py-12 mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <motion.div
-          className="text-center w-full"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl font-bold tracking-tight mb-2 text-center">
-            Connect Your Data
-          </h1>
-          <p className="text-lg text-gray-600">
-            Upload your ZIP file containing sales and inventory data.
-          </p>
-          {forecastType && (
-            <p className="mt-2 text-sm font-medium text-primary">
-              Selected forecast type: {forecastType}
-            </p>
-          )}
-          {globalForecastStatus !== 'idle' && (
-            <p className="mt-2 text-sm text-blue-500">
-              Status: {globalForecastStatus}
-            </p>
-          )}
-        </motion.div>
-
-        <div className="flex items-center gap-3">
+      <div className="relative mb-8">
+        <div className="absolute right-0 top-0 flex items-center gap-3">
           <div className="relative group">
             <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
               <User size={16} className="text-gray-600" />
@@ -245,6 +221,30 @@ const DataSourceScreen: React.FC = () => {
             Logout
           </Button>
         </div>
+
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-3xl font-bold tracking-tight mb-2">
+            Connect Your Data
+          </h1>
+          <p className="text-lg text-gray-600">
+            Upload your ZIP file containing sales and inventory data
+          </p>
+          {forecastType && (
+            <p className="mt-2 text-sm font-medium text-primary">
+              Selected forecast type: {forecastType}
+            </p>
+          )}
+          {globalForecastStatus !== 'idle' && (
+            <p className="mt-2 text-sm text-blue-500">
+              Status: {globalForecastStatus}
+            </p>
+          )}
+        </motion.div>
       </div>
 
       <GlassMorphCard className="mb-12" hover={false}>

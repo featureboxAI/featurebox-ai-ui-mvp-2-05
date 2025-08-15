@@ -174,12 +174,8 @@ const ForecastSetupScreen: React.FC = () => {
     >
       <ProgressIndicator steps={steps} currentStep={2} />
 
-      <div className="flex items-center justify-between mb-8">
-        <div className="text-center w-full">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Generated Forecast</h1>
-          {/* <p className="text-lg text-gray-600">Your forecast has been generated successfully.</p> */}
-        </div>
-        <div className="flex items-center gap-4">
+      <div className="relative mb-4">
+        <div className="absolute right-0 top-0 flex items-center gap-4">
           <div className="relative group">
             <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
               <User size={16} className="text-gray-600" />
@@ -198,8 +194,12 @@ const ForecastSetupScreen: React.FC = () => {
             Logout
           </Button>
         </div>
+
+        <div className="text-center">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Generated Forecast</h1>
+        </div>
       </div>
-      <div className="mb-8 text-center">
+      <div className="mb-4 text-center">
         {forecastType && (
           <p className="mt-2 text-sm font-medium text-primary">Using forecast type: {forecastType}</p>
         )}
@@ -224,14 +224,23 @@ const ForecastSetupScreen: React.FC = () => {
       >
         <div className="bg-white rounded-xl p-6 shadow-sm mb-6 border border-gray-100 text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              isExpired 
+                ? 'bg-gray-50 text-gray-400' 
+                : 'bg-green-50 text-green-600'
+            }`}>
               <CheckCircle size={24} />
             </div>
           </div>
 
-          <h2 className="text-xl font-semibold mb-3">Forecast Generated Successfully!</h2>
+          <h2 className="text-xl font-semibold mb-3">
+            {isExpired ? 'No Recent Forecast Available for Download' : 'Forecast Generated Successfully!'}
+          </h2>
           <p className="text-gray-600 mb-6 text-sm">
-            Your demand forecast has been processed and is ready for download.
+            {isExpired 
+              ? 'You can view your previous forecasts in the history section below'
+              : 'Your demand forecast has been processed and is ready for download.'
+            }
           </p>
 
           <motion.button 
@@ -244,7 +253,7 @@ const ForecastSetupScreen: React.FC = () => {
             disabled={!forecastResult?.filename || isExpired} 
           >
             <Download size={20} className="mr-2" />
-            {isExpired ? (forecastResult?.completedAt ? 'Download Expired (1 hour limit)' : 'No Recent Forecast') : 'Download Forecast Results'}
+            {isExpired ? 'No Recent Forecast' : 'Download Forecast Results'}
           </motion.button>
         </div>
 
@@ -252,7 +261,7 @@ const ForecastSetupScreen: React.FC = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm mb-8 border border-gray-100">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-lg">Latest Forecast Results</h3>
+            <h3 className="font-semibold text-lg">Forecast Results</h3>
           </div>
           
           {loadingHistory ? (
@@ -291,7 +300,7 @@ const ForecastSetupScreen: React.FC = () => {
                             </div>
                             <span>{forecast.formatted_time} UTC</span>
                             <span className="font-medium">Status:</span>
-                            <span className="text-green-600">{forecast.status}</span>
+                            <span className="text-green-600 capitalize">{forecast.status}</span>
                           </div>
                         </div>
                       </div>
