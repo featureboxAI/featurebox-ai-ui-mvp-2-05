@@ -203,18 +203,6 @@ const ForecastSetupScreen: React.FC = () => {
         {forecastType && (
           <p className="mt-2 text-sm font-medium text-primary">Using forecast type: {forecastType}</p>
         )}
-        {uploadedFiles && uploadedFiles.length > 0 && (
-          <p className="mt-1 text-sm text-gray-500">
-            {uploadedFiles.length === 1 
-              ? `File: ${uploadedFiles[0].name}` 
-              : `Files: ${uploadedFiles.length} files uploaded`}
-          </p>
-        )}
-        {forecastResult?.filename && (
-          <p className="mt-1 text-sm text-green-600">
-            Results generated: {forecastResult.filename}
-          </p>
-        )}
       </div>
 
       <motion.div

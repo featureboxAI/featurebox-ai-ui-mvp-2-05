@@ -240,8 +240,8 @@ const DataSourceScreen: React.FC = () => {
             </p>
           )}
           {globalForecastStatus !== 'idle' && (
-            <p className="mt-2 text-sm text-blue-500">
-              Status: {globalForecastStatus}
+            <p className="mt-2 text-base text-blue-500 font-medium">
+              Status: <span className="capitalize">{globalForecastStatus}</span>
             </p>
           )}
         </motion.div>
