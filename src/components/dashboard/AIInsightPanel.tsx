@@ -7,7 +7,9 @@ import {
   CheckCircle, 
   TrendingUp, 
   TrendingDown, 
-  Eye
+  Eye,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +48,12 @@ const AIInsightPanel: React.FC = () => {
   const [csvContent, setCsvContent] = useState('');
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState('');
+  // Section collapse states
+  const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({
+    biggestMoves: true,
+    steadyTrends: true,
+    anomalies: true
+  });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -153,6 +161,56 @@ const AIInsightPanel: React.FC = () => {
     });
   };
 
+  // New function to validate and fix insights
+  const validateAndFixInsights = (insights: Insights): Insights => {
+    const fixInsightArray = (items: InsightItem[]): InsightItem[] => {
+      const fixedItems: InsightItem[] = [];
+      
+      items.forEach(item => {
+        // Check if sku_channel contains multiple SKUs (commas, "Multiple", etc.)
+        if (item.sku_channel.includes(',') || 
+            item.sku_channel.toLowerCase().includes('multiple') ||
+            item.sku_channel.toLowerCase().includes('several')) {
+          
+          // Try to extract individual SKUs from the explanation or sku_channel
+          const skuMatches = item.explanation.match(/([A-Z]+)\s*[-×]\s*([A-Z0-9]+)/g) || [];
+          
+          if (skuMatches.length > 0) {
+            // Create separate insights for each SKU found
+            skuMatches.slice(0, 3).forEach(skuMatch => { // Limit to 3 to avoid spam
+              const cleanSku = skuMatch.replace(/×/g, '-').trim();
+              fixedItems.push({
+                ...item,
+                sku_channel: cleanSku,
+                explanation: `This specific SKU-Channel combination ${cleanSku} shows ${item.percent_change_mom ? 'a ' + item.percent_change_mom.toFixed(1) + '% change' : 'the pattern described'}. ${item.explanation.split('.')[0]}.`,
+                planner_action: `For ${cleanSku}: ${item.planner_action}`
+              });
+            });
+          } else {
+            // If we can't extract individual SKUs, create a generic one
+            fixedItems.push({
+              ...item,
+              sku_channel: "UNIDENTIFIED - SKU01",
+              explanation: "Individual SKU analysis needed. " + item.explanation,
+              planner_action: "Analyze individual SKUs: " + item.planner_action
+            });
+          }
+        } else {
+          // Keep valid single SKU insights as is
+          fixedItems.push(item);
+        }
+      });
+      
+      return fixedItems;
+    };
+
+    return {
+      biggest_moves: fixInsightArray(insights.biggest_moves),
+      steady_trends: fixInsightArray(insights.steady_trends),
+      historical_anomalies: fixInsightArray(insights.historical_anomalies)
+    };
+  };
+
   const generateInsights = async () => {
     if (!selectedFile || !csvContent) {
       setError('Please select a CSV file first.');
@@ -180,44 +238,73 @@ const AIInsightPanel: React.FC = () => {
         setProgressText(`Processing chunk ${i + 1} of ${totalChunks}...`);
         
         const chunkCsv = Papa.unparse(chunk);
-        const chunk_prompt = `### ROLE You are a meticulous **Supply‑Chain Data Analyst** embedded in our forecasting platform. You have full command of descriptive statistics, time‑series diagnostics, and business‑oriented storytelling. Write for demand planners and business managers who want quick, actionable takeaways.
+        
+        const chunk_prompt = `You are a Senior Supply Chain Business Analyst providing insights for executive decision-making. Analyze this forecast data with a focus on business opportunities and strategic actions.
 
-### GOAL From the **new forecast data** you (the model) just received—*note: this is a **chunked portion** of the full dataset*—surface the **top insights** that help users:
-1. Understand material demand swings (biggest MoM jumps & drops) and their likely drivers.
-2. Spot SKU × Channel combinations with consistent growth or decline trends.
-3. Detect unusual patterns in history (e.g., long zero-demand periods followed by spikes).
-4. Explain **why** these trends or patterns likely happened, using statistical or business evidence (e.g., promo_flag, seasonality, historical context).
-5. Decide what to act on now (e.g., "stock up", "watch inventory", "investigate promo impact") without forcing them to debug the model.
+CRITICAL INSTRUCTIONS:
+1. NEVER question the accuracy of forecasts, models, or historical data
+2. NEVER suggest there are "model issues" or "data problems" 
+3. NEVER use phrases like "misconfigured", "inaccurate data", "model error", or similar
+4. Focus on BUSINESS INSIGHTS and MARKET OPPORTUNITIES
+5. Provide specific, actionable business explanations
 
-### INFORMATION ACCESS You are provided with a **chunked slice** of the overall dataset:
+DATA CONTEXT:
+- sheet = retail channel/customer where product is sold
+- item = product SKU code  
+- forecast = predicted sales units for upcoming period
+- historic_value = recent actual sales performance
+
+DATA:
 ${chunkCsv}
 
-Here is a breakdown of each column in the dataset:
-- sheet: The company that sells the product.
-- item: A unique identifier for the product.
-- model: The model used to generate the forecast values.
-- ds: The date associated with the forecast.
-- forecast: The predicted number of sales for the product on the given date.
-- historical_value: The most recent actual number of sales for the product.
+ANALYSIS TASK: 
+Calculate demand change: (forecast - historic_value) / historic_value * 100 for each sheet-item combination.
 
-Use the historical_value column as a general historical baseline for your insights.
-To calculate percent_change_mom, compare the forecast to the historical_value column.
+Focus on identifying:
+1. GROWTH OPPORTUNITIES (significant increases in demand)
+2. DECLINE RISKS (significant decreases in demand) 
+3. STABLE PERFORMERS (consistent growth/decline trends)
+4. MARKET SHIFTS (unusual patterns worth investigating)
 
-*You will see other chunks separately. Treat your response as self-contained, but precise and consistent in format with earlier chunks so we can later combine them.*
+For each insight, provide BUSINESS-FOCUSED explanations such as:
+- Seasonal demand patterns
+- Market expansion opportunities  
+- Competitive positioning changes
+- Customer preference shifts
+- New product adoption
+- Category lifecycle stages
+- Promotional effectiveness
+- Distribution channel performance
+- Regional market dynamics
+- Economic factor impacts
 
-### INSTRUCTIONS
-* Work at **SKU–Channel granularity** (e.g., "SKU 12345 – Amazon.com") when citing results.
-* Compute month-over-month % change on the *forecast* for each SKU-Channel.
-* Identify the **top N (default = 10) largest increases** and **top N largest decreases**.
-* Flag SKU-Channels with a **steady CAGR** (≥ tolerance) over the last *k* periods (default = 6).
-* Scan historical_data to find patterns:
-  - ≥ 3 straight periods of ~0 demand followed by a spike ≥ 5× historical median.
-  - Abrupt structural breaks (mean shift, variance jump).
-* Link each insight to plausible drivers (promo_flag, seasonality, external_signals) when evidence exists; otherwise say "driver unknown".
-* For each insight, include a concise **explanation or root cause** of why the trend or anomaly likely occurred.
-* End with **"Planner Actions"**—concise bullets of recommended next steps.
+RESPONSE FORMAT:
 
-### STYLE Use plain English phrases—avoid jargon. Keep numeric values to one decimal unless integers. Limit each insight to ≤ 40 words.`;
+SIGNIFICANT DEMAND INCREASES:
+- Sheet-Item: [exact sheet] - [exact item]
+  Demand Change: [X]% increase
+  Analysis: [specific market/business explanation for this product-channel growth]
+  Recommended Action: [specific business action to capitalize on this opportunity]
+
+SIGNIFICANT DEMAND DECREASES:
+- Sheet-Item: [exact sheet] - [exact item]  
+  Demand Change: [X]% decrease
+  Analysis: [specific market/business explanation for this decline]
+  Recommended Action: [specific business action to address this challenge]
+
+STABLE GROWTH TRENDS:
+- Sheet-Item: [exact sheet] - [exact item]
+  Growth Pattern: [steady growth/decline] 
+  Analysis: [market/business explanation for this consistent performance]
+  Recommended Action: [action to maintain or optimize this trend]
+
+MARKET ANOMALIES:
+- Sheet-Item: [exact sheet] - [exact item]
+  Pattern: [describe the unusual demand pattern]
+  Analysis: [market/business explanation for this anomaly]
+  Recommended Action: [action to investigate or respond to this pattern]
+
+Remember: Focus on market dynamics, customer behavior, and business strategy. Never question data quality or model performance.`;
 
         await countTokensForPrompt(chunk_prompt);
         
@@ -234,90 +321,7 @@ To calculate percent_change_mom, compare the forecast to the historical_value co
               body: JSON.stringify({
                 contents: [{
                   parts: [{ text: chunk_prompt }]
-                }],
-                generationConfig: {
-                  responseMimeType: "application/json",
-                  responseSchema: {
-                    type: "object",
-                    properties: {
-                      biggest_moves: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            sku_channel: { type: "string" },
-                            percent_change_mom: { type: "number" },
-                            direction: { type: "string" },
-                            likely_drivers: {
-                              type: "array",
-                              items: { type: "string" }
-                            },
-                            explanation: { type: "string" },
-                            planner_action: { type: "string" }
-                          },
-                          required: [
-                            "sku_channel",
-                            "percent_change_mom",
-                            "direction",
-                            "likely_drivers",
-                            "explanation",
-                            "planner_action"
-                          ]
-                        }
-                      },
-                      steady_trends: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            sku_channel: { type: "string" },
-                            cagr_6p: { type: "number" },
-                            trend: { type: "string" },
-                            likely_drivers: {
-                              type: "array",
-                              items: { type: "string" }
-                            },
-                            explanation: { type: "string" },
-                            planner_action: { type: "string" }
-                          },
-                          required: [
-                            "sku_channel",
-                            "cagr_6p",
-                            "trend",
-                            "likely_drivers",
-                            "explanation",
-                            "planner_action"
-                          ]
-                        }
-                      },
-                      historical_anomalies: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            sku_channel: { type: "string" },
-                            pattern: { type: "string" },
-                            possible_cause: { type: "string" },
-                            explanation: { type: "string" },
-                            planner_action: { type: "string" }
-                          },
-                          required: [
-                            "sku_channel",
-                            "pattern",
-                            "possible_cause",
-                            "explanation",
-                            "planner_action"
-                          ]
-                        }
-                      },
-                    },
-                    required: [
-                      "biggest_moves",
-                      "steady_trends",
-                      "historical_anomalies"
-                    ]
-                  }
-                }
+                }]
               })
             });
             
@@ -335,14 +339,8 @@ To calculate percent_change_mom, compare the forecast to the historical_value co
             const data = await response.json();
             if (data.candidates && data.candidates[0] && data.candidates[0].content) {
               const content = data.candidates[0].content.parts[0].text;
-              try {
-                const parsedInsights = JSON.parse(content);
-                allChunkReports.push(JSON.stringify(parsedInsights));
-                console.log(`✅ Success: Chunk ${i + 1} of ${totalChunks} processed. Insights received:`, parsedInsights);
-              } catch (parseError) {
-                console.error('Failed to parse JSON response:', parseError);
-                setError('Received invalid response format from AI service.');
-              }
+              allChunkReports.push(content);
+              console.log(`✅ Success: Chunk ${i + 1} of ${totalChunks} processed. Text response received.`);
             } else {
               setError('No valid response received from AI service.');
             }
@@ -362,167 +360,155 @@ To calculate percent_change_mom, compare the forecast to the historical_value co
         }
       }
       
-      setProgressText('Waiting 90s before merging all chunk insights...');
+      setProgressText('Waiting 90s before converting to structured format...');
       setProgress(90);
       await new Promise((res) => setTimeout(res, 90000));
 
-      setProgressText('Merging all chunk insights...');
+      setProgressText('Converting to structured format...');
       setProgress(95);
       
-      const joinedReports = allChunkReports.join('\n\n---\n\n');
-      const merge_prompt = `You are a **Supply‑Chain Data Analyst**. Your job now is to **combine and summarize** the following insight reports into a single, coherent document. Preserve structure, conciseness, and actionable insights.
+      const joinedReports = allChunkReports.join('\n\n---CHUNK SEPARATOR---\n\n');
+      
+      // Improved conversion prompt with business focus
+      const convert_prompt = `Convert this supply chain business analysis into structured JSON format for executive reporting.
 
-Here are the reports:
+CRITICAL QUALITY STANDARDS:
+1. NO references to model issues, data problems, or forecast accuracy
+2. Focus on BUSINESS INSIGHTS and MARKET OPPORTUNITIES
+3. Use professional, confident language suitable for executive review
+4. Provide specific, actionable business explanations
+5. Extract only individual sheet-item combinations (never group multiple items)
+
+BUSINESS ANALYSIS TO CONVERT:
 ${joinedReports}
 
-### TASK
-Summarize the most important trends and anomalies across all reports, removing duplicates, clustering similar insights, and keeping explanations clear and useful.
+TARGET JSON STRUCTURE:
 
-End with a final **Planner Actions** list.`;
+{
+  "biggest_moves": [
+    {
+      "sku_channel": "SHEET - ITEM",
+      "percent_change_mom": number,
+      "direction": "Growth" or "Decline", 
+      "likely_drivers": ["business_driver_1", "business_driver_2"],
+      "explanation": "Professional business explanation focusing on market dynamics, customer behavior, or strategic positioning for this specific sheet-item",
+      "planner_action": "Specific strategic business action to capitalize on opportunity or address challenge"
+    }
+  ],
+  "steady_trends": [
+    {
+      "sku_channel": "SHEET - ITEM",
+      "cagr_6p": number,
+      "trend": "Growth" or "Decline",
+      "likely_drivers": ["business_driver_1", "business_driver_2"], 
+      "explanation": "Professional business explanation of why this sheet-item shows consistent performance",
+      "planner_action": "Strategic action to maintain or optimize this stable trend"
+    }
+  ],
+  "historical_anomalies": [
+    {
+      "sku_channel": "SHEET - ITEM",
+      "pattern": "Business-focused description of the demand pattern",
+      "possible_cause": "Market-based explanation for the anomaly",
+      "explanation": "Professional analysis of market conditions affecting this sheet-item", 
+      "planner_action": "Strategic investigation or response action"
+    }
+  ]
+}
 
-      let mergeRetries = 0;
-      let mergeSuccess = false;
+BUSINESS DRIVER EXAMPLES (use relevant ones):
+- "Seasonal demand peaks"
+- "New product introduction"  
+- "Market expansion opportunity"
+- "Competitive pricing advantage"
+- "Customer preference shift"
+- "Category lifecycle maturity"
+- "Promotional campaign success"
+- "Distribution channel optimization"
+- "Regional market growth"
+- "Economic factor influence"
+- "Category consolidation"
+- "Brand positioning strength"
+
+CONVERSION RULES:
+1. Each sku_channel must be exactly "SHEET - ITEM" format
+2. Select top 15 biggest moves, top 10 steady trends, top 8 anomalies  
+3. Make all explanations business-focused and confident
+4. Ensure all actions are strategic and specific
+5. Filter out any model/data quality references from the source analysis`;
+
+      let convertRetries = 0;
+      let convertSuccess = false;
       
-      while (!mergeSuccess && mergeRetries < 3) {
+      while (!convertSuccess && convertRetries < 3) {
         try {
-          const mergeResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+          const convertResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               contents: [{
-                parts: [{ text: merge_prompt }]
+                parts: [{ text: convert_prompt }]
               }],
               generationConfig: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                  type: "object",
-                  properties: {
-                    biggest_moves: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          sku_channel: { type: "string" },
-                          percent_change_mom: { type: "number" },
-                          direction: { type: "string" },
-                          likely_drivers: {
-                            type: "array",
-                            items: { type: "string" }
-                          },
-                          explanation: { type: "string" },
-                          planner_action: { type: "string" }
-                        },
-                        required: [
-                          "sku_channel",
-                          "percent_change_mom",
-                          "direction",
-                          "likely_drivers",
-                          "explanation",
-                          "planner_action"
-                        ]
-                      }
-                    },
-                    steady_trends: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          sku_channel: { type: "string" },
-                          cagr_6p: { type: "number" },
-                          trend: { type: "string" },
-                          likely_drivers: {
-                            type: "array",
-                            items: { type: "string" }
-                          },
-                          explanation: { type: "string" },
-                          planner_action: { type: "string" }
-                        },
-                        required: [
-                          "sku_channel",
-                          "cagr_6p",
-                          "trend",
-                          "likely_drivers",
-                          "explanation",
-                          "planner_action"
-                        ]
-                      }
-                    },
-                    historical_anomalies: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          sku_channel: { type: "string" },
-                          pattern: { type: "string" },
-                          possible_cause: { type: "string" },
-                          explanation: { type: "string" },
-                          planner_action: { type: "string" }
-                        },
-                        required: [
-                          "sku_channel",
-                          "pattern",
-                          "possible_cause",
-                          "explanation",
-                          "planner_action"
-                        ]
-                      }
-                    },
-                  },
-                  required: [
-                    "biggest_moves",
-                    "steady_trends",
-                    "historical_anomalies"
-                  ]
-                }
+                responseMimeType: "application/json"
               }
             })
           });
           
-          if (mergeResponse.status === 429) {
-            mergeRetries++;
-            setProgressText(`Rate limited during merge (429). Waiting 90s before retrying... (Attempt ${mergeRetries}/3)`);
+          if (convertResponse.status === 429) {
+            convertRetries++;
+            setProgressText(`Rate limited during conversion (429). Waiting 90s before retrying... (Attempt ${convertRetries}/3)`);
             await new Promise(res => setTimeout(res, 90000));
             continue;
           }
           
-          if (!mergeResponse.ok) {
-            throw new Error(`Merge API request failed: ${mergeResponse.status}`);
+          if (!convertResponse.ok) {
+            throw new Error(`Convert API request failed: ${convertResponse.status}`);
           }
           
-          const mergeData = await mergeResponse.json();
-          if (mergeData.candidates && mergeData.candidates[0] && mergeData.candidates[0].content) {
-            const mergeContent = mergeData.candidates[0].content.parts[0].text;
+          const convertData = await convertResponse.json();
+          if (convertData.candidates && convertData.candidates[0] && convertData.candidates[0].content) {
+            const convertContent = convertData.candidates[0].content.parts[0].text;
             try {
-              const finalInsights = JSON.parse(mergeContent);
+              const rawInsights = JSON.parse(convertContent);
+              // Apply validation and fixing
+              const finalInsights = validateAndFixInsights(rawInsights);
               setInsights(finalInsights);
-              console.log('✅ Success: All chunks merged successfully:', finalInsights);
+              console.log('✅ Success: Analysis converted and validated:', finalInsights);
             } catch (parseError) {
-              console.error('Failed to parse merged JSON response:', parseError);
-              setError('Received invalid merge response format from AI service.');
+              console.error('Failed to parse converted JSON response:', parseError);
+              setError('Received invalid conversion response format from AI service.');
             }
           } else {
-            setError('No valid merge response received from AI service.');
+            setError('No valid conversion response received from AI service.');
           }
-          mergeSuccess = true;
+          convertSuccess = true;
         } catch (err) {
-          if (mergeRetries >= 2) {
-            setError(`Failed to merge insights after 3 attempts. Error: ${(err as Error).message}`);
+          if (convertRetries >= 2) {
+            setError(`Failed to convert insights after 3 attempts. Error: ${(err as Error).message}`);
           }
-          mergeRetries++;
+          convertRetries++;
           await new Promise(res => setTimeout(res, 90000));
         }
       }
       
       setProgress(100);
-      setProgressText('All chunks processed and merged.');
+      setProgressText('Business insights generated successfully.');
     } catch (error) {
       console.error('Error generating insights:', error);
       setError('Failed to generate insights. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleSection = (sectionKey: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
   };
 
   const resetForm = () => {
@@ -541,67 +527,96 @@ End with a final **Planner Actions** list.`;
     }
   };
 
-  const renderInsightSection = (title: string, items: InsightItem[], icon: React.ReactNode, colorClass: string) => {
+  const renderInsightSection = (title: string, items: InsightItem[], icon: React.ReactNode, colorClass: string, sectionKey: string) => {
     if (!items || items.length === 0) return null;
+    
+    const isCollapsed = collapsedSections[sectionKey];
     
     return (
       <Card className="mb-6">
         <CardContent className="p-6">
-          <h3 className={`text-lg font-semibold mb-4 flex items-center ${colorClass}`}>
-            {icon}
-            {title}
-          </h3>
-          <div className="space-y-4">
-            {items.map((item, index) => (
-              <div key={index} className="bg-muted/30 rounded-lg p-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <div className={`w-2 h-2 rounded-full mt-2 ${
-                      colorClass.includes('blue') ? 'bg-blue-500' : 
-                      colorClass.includes('green') ? 'bg-green-500' : 
-                      colorClass.includes('yellow') ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}></div>
-                  </div>
-                  <div className="ml-3 flex-1">
-                    <p className="text-sm font-medium mb-2">
-                      {item.sku_channel}
-                    </p>
-                    {item.percent_change_mom !== undefined && (
-                      <p className="text-sm text-muted-foreground mb-1">
-                        <span className="font-medium">Change:</span> {item.percent_change_mom.toFixed(1)}% {item.direction}
+          <div 
+            className={`text-lg font-semibold mb-4 flex items-center justify-between cursor-pointer hover:opacity-80 ${colorClass}`}
+            onClick={() => toggleSection(sectionKey)}
+          >
+            <div className="flex items-center">
+              {icon}
+              {title}
+              <span className="ml-2 text-sm font-normal text-muted-foreground">({items.length} items)</span>
+            </div>
+            {isCollapsed ? (
+              <ChevronDown className="h-5 w-5" />
+            ) : (
+              <ChevronUp className="h-5 w-5" />
+            )}
+          </div>
+          
+          {!isCollapsed && (
+            <div className="space-y-4">
+              {items.map((item, index) => (
+                <div key={index} className="bg-muted/30 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <div className={`w-2 h-2 rounded-full mt-2 ${
+                        colorClass.includes('blue') ? 'bg-blue-500' : 
+                        colorClass.includes('green') ? 'bg-green-500' : 
+                        colorClass.includes('yellow') ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}></div>
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm font-medium mb-2 text-primary">
+                        {item.sku_channel}
                       </p>
-                    )}
-                    {item.cagr_6p !== undefined && (
-                      <p className="text-sm text-muted-foreground mb-1">
-                        <span className="font-medium">6-Period CAGR:</span> {item.cagr_6p.toFixed(1)}% ({item.trend})
-                      </p>
-                    )}
-                    {item.pattern && (
-                      <p className="text-sm text-muted-foreground mb-1">
-                        <span className="font-medium">Pattern:</span> {item.pattern}
-                      </p>
-                    )}
-                    {item.possible_cause && (
-                      <p className="text-sm text-muted-foreground mb-1">
-                        <span className="font-medium">Possible Cause:</span> {item.possible_cause}
-                      </p>
-                    )}
-                    {item.likely_drivers && item.likely_drivers.length > 0 && !item.likely_drivers.some(driver => driver.toLowerCase().includes('unknown')) && (
-                      <p className="text-sm text-muted-foreground mb-1">
-                        <span className="font-medium">Drivers:</span> {item.likely_drivers.filter(driver => !driver.toLowerCase().includes('unknown')).join(', ')}
-                      </p>
-                    )}
-                    <p className="text-sm text-muted-foreground mb-2">
-                      <span className="font-medium">Explanation:</span> {item.explanation}
-                    </p>
-                    <div className="text-sm text-primary bg-primary/10 px-2 py-1 rounded">
-                      <span className="font-medium">Action:</span> {item.planner_action}
+                      {item.percent_change_mom !== undefined && item.percent_change_mom !== null && (
+                        <p className="text-sm text-muted-foreground mb-1">
+                          <span className="font-medium">Demand Change:</span> 
+                          <span className={`ml-1 font-semibold ${item.percent_change_mom > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {item.percent_change_mom > 0 ? '+' : ''}{item.percent_change_mom.toFixed(1)}% {item.direction}
+                          </span>
+                        </p>
+                      )}
+                      {item.cagr_6p !== undefined && item.cagr_6p !== null && (
+                        <p className="text-sm text-muted-foreground mb-1">
+                          <span className="font-medium">Growth Rate:</span> 
+                          <span className={`ml-1 font-semibold ${item.cagr_6p > 0 ? 'text-green-600' : item.cagr_6p < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                            {item.cagr_6p > 0 ? '+' : ''}{item.cagr_6p.toFixed(1)}%{item.cagr_6p !== 0 && item.trend ? ` (${item.trend})` : ''}
+                          </span>
+                        </p>
+                      )}
+                      {item.pattern && (
+                        <p className="text-sm text-muted-foreground mb-1">
+                          <span className="font-medium">Market Pattern:</span> {item.pattern}
+                        </p>
+                      )}
+                      {item.possible_cause && (
+                        <p className="text-sm text-muted-foreground mb-1">
+                          <span className="font-medium">Market Factor:</span> {item.possible_cause}
+                        </p>
+                      )}
+                      {item.likely_drivers && item.likely_drivers.length > 0 && 
+                       item.likely_drivers.some(driver => !driver.toLowerCase().includes('unknown') && driver.trim() !== '') && (
+                        <p className="text-sm text-muted-foreground mb-2">
+                          <span className="font-medium">Drivers:</span> {
+                            item.likely_drivers
+                              .filter(driver => !driver.toLowerCase().includes('unknown') && driver.trim() !== '')
+                              .join(', ')
+                          }
+                        </p>
+                      )}
+                      <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-2">
+                        <p className="text-sm text-blue-800">
+                          <span className="font-medium">Analysis:</span> {item.explanation}
+                        </p>
+                      </div>
+                      <div className="text-sm text-white bg-primary px-3 py-2 rounded-md">
+                        <span className="font-medium">Recommended Action:</span> {item.planner_action}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -612,7 +627,7 @@ End with a final **Planner Actions** list.`;
       <CardContent className="p-6">
         <div className="flex items-center gap-2 mb-6">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-lg">AI Supply Chain Insights</h3>
+          <h3 className="font-semibold text-lg">AI Insights</h3>
         </div>
 
         {/* File Upload Section */}
@@ -685,27 +700,30 @@ End with a final **Planner Actions** list.`;
         {/* Insights Display */}
         {insights && (
           <div className="mt-6">
-            <h4 className="text-xl font-bold mb-4">Generated Insights</h4>
+            <h4 className="text-xl font-bold mb-4">Generated Insights Report</h4>
             
             {renderInsightSection(
-              "Biggest Demand Movements", 
+              "Significant Demand Movements", 
               insights.biggest_moves, 
               <TrendingUp className="h-5 w-5 text-blue-500 mr-2" />,
-              "text-blue-700"
+              "text-blue-700",
+              "biggestMoves"
             )}
             
             {renderInsightSection(
-              "Steady Growth/Decline Trends", 
+              "Steady Performance Trends", 
               insights.steady_trends, 
               <TrendingDown className="h-5 w-5 text-green-500 mr-2" />,
-              "text-green-700"
+              "text-green-700",
+              "steadyTrends"
             )}
             
             {renderInsightSection(
-              "Historical Anomalies", 
+              "Market Pattern Changes", 
               insights.historical_anomalies, 
               <Eye className="h-5 w-5 text-yellow-500 mr-2" />,
-              "text-yellow-700"
+              "text-yellow-700",
+              "anomalies"
             )}
 
             {/* Disclaimer */}
@@ -713,7 +731,7 @@ End with a final **Planner Actions** list.`;
                 <Alert className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                 <AlertTriangle className="h-4 w-4 text-yellow-500 stroke-current flex-shrink-0" />
                 <AlertDescription className="text-sm text-yellow-700">
-                    <strong>Disclaimer:</strong> This analysis is AI-generated. Supply chain analysts should verify all insights and recommendations before taking action.
+                  <strong>Disclaimer:</strong> This analysis is AI-generated. Supply chain analysts should verify all insights and recommendations before taking action.
                 </AlertDescription>
                 </Alert>
             </div>
@@ -722,7 +740,7 @@ End with a final **Planner Actions** list.`;
 
         {!insights && !loading && (
           <div className="text-sm text-muted-foreground">
-            Upload your supply chain forecast data to generate AI-powered insights based on pattern analysis of historical data and forecasted results.
+            Upload your supply chain forecast data to generate AI-powered business insights focused on market opportunities, demand patterns, and strategic recommendations.
           </div>
         )}
       </CardContent>
