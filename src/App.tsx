@@ -33,6 +33,7 @@ const FORECASTING_ACCESS_USER_IDS = [
 // Users restricted from forecasting features (Market Trends Only)
 const FORECASTING_RESTRICTED_USER_IDS = [
   'auth0|688800626594333b2d3813ab', // karthikv722@gmail.com - Sienna Wings Dummy
+  'auth0|68884faae8ffc9f5c2dd2e92', // ceo@siennasauceco.com - Actual Sienna Wings
 ];
 
 // Users with no restrictions (can access Market Trends)
