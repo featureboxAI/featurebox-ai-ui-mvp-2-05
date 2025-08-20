@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, ReactNode, useRef, useEffect } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 
 export interface ForecastResult {
   filename: string;
@@ -43,6 +44,7 @@ interface ForecastContextType {
 const ForecastContext = createContext<ForecastContextType | undefined>(undefined);
 
 export const ForecastProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth0();
   const [forecastType, setForecastType] = useState<string>('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isUploadSuccessful, setIsUploadSuccessful] = useState<boolean>(false);
@@ -68,6 +70,29 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
 
   const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
+  // Helper function to get the correct backend URL based on user
+  const getBackendUrl = () => {
+    let backendUrl = import.meta.env.VITE_AUTH_API_URL || 'https://featurebox-ai-backend-service-666676702816.us-west1.run.app'; // Default
+
+    if (
+      user?.sub === 'auth0|688e5737480c85818cab73ba' ||
+      user?.sub === 'auth0|68885310e8ffc9f5c2dd2f14'
+    ) {
+      backendUrl = 'https://ladera-featurebox-ai-backend-service-666676702816.us-west1.run.app';
+      console.log('Ladera user detected, using Ladera backend for status polling');
+    } else if (
+      user?.sub === 'auth0|687f0be2fb6744d5fe3ca09f' ||
+      user?.sub === 'auth0|688849466594333b2d382039'
+    ) {
+      backendUrl = 'https://featurebox-ai-backend-service-666676702816.us-west1.run.app';
+      console.log('Herb Farms user detected, using Herb Farms backend for status polling');
+    } else {
+      console.log('Default user, using default backend for status polling');
+    }
+
+    return backendUrl;
+  };
+
   // Wrapper function to save to localStorage whenever forecast result is set
   const setForecastResult = (result: ForecastResult | null) => {
     setForecastResultState(result);
@@ -87,7 +112,7 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
     if (globalForecastStatus === 'running' || globalForecastStatus === 'started') {
       console.log('[Visibility] Checking forecast status immediately');
       try {
-        const res = await fetch(`${import.meta.env.VITE_AUTH_API_URL || 'https://featurebox-ai-backend-service-666676702816.us-west1.run.app'}/status`);
+        const res = await fetch(`${getBackendUrl()}/status`);
         const statusData = await res.json();
         console.log('[Visibility] Status check result:', statusData);
 
@@ -141,7 +166,7 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
     globalPollingRef.current = setInterval(async () => {
       console.log("[Global Polling] Tick - calling /status");
       try {
-        const res = await fetch(`${import.meta.env.VITE_AUTH_API_URL || 'https://featurebox-ai-backend-service-666676702816.us-west1.run.app'}/status`);
+        const res = await fetch(`${getBackendUrl()}/status`);
         const statusData = await res.json();
         console.log("[Global Polling] Response JSON:", statusData);
 
