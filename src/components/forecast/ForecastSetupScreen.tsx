@@ -125,21 +125,66 @@ const ForecastSetupScreen: React.FC = () => {
     navigate('/dashboard');
   };
 
+  const getBackendUrl = () => {
+    let backendUrl = import.meta.env.VITE_AUTH_API_URL || 'https://featurebox-ai-backend-service-666676702816.us-west1.run.app';
+
+    if (
+      user?.sub === 'auth0|688e5737480c85818cab73ba' ||
+      user?.sub === 'auth0|68885310e8ffc9f5c2dd2f14'
+    ) {
+      backendUrl = 'https://ladera-featurebox-ai-backend-service-666676702816.us-west1.run.app';
+      console.log('Ladera user detected, using Ladera backend for download');
+    } else if (
+      user?.sub === 'auth0|687f0be2fb6744d5fe3ca09f' ||
+      user?.sub === 'auth0|688849466594333b2d382039'
+    ) {
+      backendUrl = 'https://featurebox-ai-backend-service-666676702816.us-west1.run.app';
+      console.log('Herb Farms user detected, using Herb Farms backend for download');
+    } else {
+      console.log('Default user, using default backend for download');
+    }
+
+    return backendUrl;
+  };
+
   const handleExportToExcel = async () => {
     try {
       console.log("Starting download. Forecast result:", forecastResult);
-      const response = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/download-forecast`);
+      const backendUrl = getBackendUrl();
+      console.log("Using backend URL for download:", backendUrl);
+      const response = await fetch(`${backendUrl}/download-forecast`);
       console.log("Response status:", response.status);
-      console.log("Response headers:", response.headers);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
       
-      if (!response.ok) throw new Error(`Download failed with status: ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Download failed - Response body:", errorText);
+        throw new Error(`Download failed with status: ${response.status}. ${errorText}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      console.log("Content-Type:", contentType);
+      
+      // Check if we're getting HTML instead of Excel file
+      if (contentType && contentType.includes('text/html')) {
+        const htmlContent = await response.text();
+        console.error("Received HTML instead of Excel file:", htmlContent.substring(0, 500));
+        throw new Error("Server returned HTML instead of Excel file. This might be an authentication or server error.");
+      }
   
       const blob = await response.blob();
       console.log("Blob size:", blob.size, "Type:", blob.type);
       
-      // Check if the blob is empty or has wrong type
+      // Check if the blob is empty
       if (blob.size === 0) {
         throw new Error("Downloaded file is empty");
+      }
+      
+      // Validate that we have a proper Excel file
+      if (contentType && !contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') && 
+          !contentType.includes('application/vnd.ms-excel') && 
+          !contentType.includes('application/octet-stream')) {
+        console.warn("Unexpected content type for Excel file:", contentType);
       }
       
       const url = window.URL.createObjectURL(blob);
