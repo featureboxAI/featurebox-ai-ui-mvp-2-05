@@ -42,11 +42,11 @@ const RESTRICTED_USER_IDS = [
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ForecastProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+    <BrowserRouter>
+      <ForecastProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
@@ -87,9 +87,9 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ForecastProvider>
+        </TooltipProvider>
+      </ForecastProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

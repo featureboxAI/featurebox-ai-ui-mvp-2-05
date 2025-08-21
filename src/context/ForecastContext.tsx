@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useRef, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useNavigate } from 'react-router-dom';
 
 export interface ForecastResult {
   filename: string;
@@ -45,6 +46,7 @@ const ForecastContext = createContext<ForecastContextType | undefined>(undefined
 
 export const ForecastProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth0();
+  const navigate = useNavigate();
   const [forecastType, setForecastType] = useState<string>('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isUploadSuccessful, setIsUploadSuccessful] = useState<boolean>(false);
@@ -140,7 +142,7 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
           console.log('[Visibility] Current path on completion:', currentPath);
           if (currentPath === '/data-source') {
             console.log('[Visibility] Navigating to forecast results');
-            window.location.href = '/forecast-results';
+            navigate('/forecast-results');
           } else {
             console.log('[Visibility] Not on data-source page, skipping navigation');
           }
@@ -196,7 +198,7 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
           console.log('[Global Polling] Current path on completion:', currentPath);
           if (currentPath === '/data-source') {
             console.log('[Global Polling] Navigating to forecast results');
-            window.location.href = '/forecast-results';
+            navigate('/forecast-results');
           } else {
             console.log('[Global Polling] Not on data-source page, skipping navigation');
           }
