@@ -77,7 +77,7 @@ const ForecastSetupScreen: React.FC = () => {
   const fetchForecastHistory = async () => {
     setLoadingHistory(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_AUTH_API_URL}/forecast-history?limit=3`);
+      const response = await fetch(`${getBackendUrl()}/forecast-history?limit=3`);
       if (response.ok) {
         const data = await response.json();
         setForecastHistory(data.forecasts || []);
@@ -92,7 +92,7 @@ const ForecastSetupScreen: React.FC = () => {
   const handleDownloadHistoryFile = async (blobPath: string, filename: string) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_AUTH_API_URL}/download-forecast-file?blob_path=${encodeURIComponent(blobPath)}`
+        `${getBackendUrl()}/download-forecast-file?blob_path=${encodeURIComponent(blobPath)}`
       );
       
       if (!response.ok) throw new Error("Download failed");
