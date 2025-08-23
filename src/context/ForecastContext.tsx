@@ -109,53 +109,6 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Function to check forecast status immediately
-  const checkForecastStatus = async () => {
-    if (globalForecastStatus === 'running' || globalForecastStatus === 'started') {
-      console.log('[Visibility] Checking forecast status immediately');
-      try {
-        const res = await fetch(`${getBackendUrl()}/status`);
-        const statusData = await res.json();
-        console.log('[Visibility] Status check result:', statusData);
-
-        if (statusData.status === "completed") {
-          console.log('[Visibility] Found completed status on page visibility');
-          
-          if (globalPollingRef.current) {
-            clearInterval(globalPollingRef.current);
-            globalPollingRef.current = null;
-          }
-
-          setGlobalForecastStatus("completed");
-          
-          // Set forecast result if available
-          const gcsPath = statusData.forecast_gcs || '';
-          const filename = gcsPath.split('/').pop() || 'forecast_results.xlsx';
-          setForecastResult({
-            filename,
-            download_url: statusData.forecast_gcs || '',
-            completedAt: new Date()
-          });
-          
-          // Navigate to results page automatically only when forecast completes
-          const currentPath = window.location.pathname;
-          console.log('[Visibility] Current path on completion:', currentPath);
-          if (currentPath === '/data-source') {
-            console.log('[Visibility] Navigating to forecast results');
-            navigate('/forecast-results');
-          } else {
-            console.log('[Visibility] Not on data-source page, skipping navigation');
-          }
-        } else if (statusData.status === "failed" || statusData.status === "error") {
-          console.log('[Visibility] Found failed status on page visibility');
-          stopGlobalPolling();
-          setGlobalForecastStatus("failed");
-        }
-      } catch (error) {
-        console.error('[Visibility] Status check failed:', error);
-      }
-    }
-  };
 
   const startGlobalPolling = () => {
     // Prevent multiple polling intervals
@@ -246,6 +199,53 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
 
   // Set up page visibility listener to check status when page becomes visible
   useEffect(() => {
+    const checkForecastStatus = async () => {
+      if (globalForecastStatus === 'running' || globalForecastStatus === 'started') {
+        console.log('[Visibility] Checking forecast status immediately');
+        try {
+          const res = await fetch(`${getBackendUrl()}/status`);
+          const statusData = await res.json();
+          console.log('[Visibility] Status check result:', statusData);
+
+          if (statusData.status === "completed") {
+            console.log('[Visibility] Found completed status on page visibility');
+            
+            if (globalPollingRef.current) {
+              clearInterval(globalPollingRef.current);
+              globalPollingRef.current = null;
+            }
+
+            setGlobalForecastStatus("completed");
+            
+            // Set forecast result if available
+            const gcsPath = statusData.forecast_gcs || '';
+            const filename = gcsPath.split('/').pop() || 'forecast_results.xlsx';
+            setForecastResult({
+              filename,
+              download_url: statusData.forecast_gcs || '',
+              completedAt: new Date()
+            });
+            
+            // Navigate to results page automatically only when forecast completes
+            const currentPath = window.location.pathname;
+            console.log('[Visibility] Current path on completion:', currentPath);
+            if (currentPath === '/data-source') {
+              console.log('[Visibility] Navigating to forecast results');
+              navigate('/forecast-results');
+            } else {
+              console.log('[Visibility] Not on data-source page, skipping navigation');
+            }
+          } else if (statusData.status === "failed" || statusData.status === "error") {
+            console.log('[Visibility] Found failed status on page visibility');
+            stopGlobalPolling();
+            setGlobalForecastStatus("failed");
+          }
+        } catch (error) {
+          console.error('[Visibility] Status check failed:', error);
+        }
+      }
+    };
+
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         console.log('[Visibility] Page became visible, checking forecast status');
@@ -258,7 +258,7 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [globalForecastStatus]);
+  }, [globalForecastStatus, navigate, setForecastResult, setGlobalForecastStatus, stopGlobalPolling]);
 
   return (
     <ForecastContext.Provider value={{ 
